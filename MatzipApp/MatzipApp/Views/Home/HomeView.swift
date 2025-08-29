@@ -2,6 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct HomeView: View {
+    @StateObject private var viewModel = HomeViewModel()
     @State private var searchText = ""
     
     var body: some View {
@@ -11,13 +12,22 @@ struct HomeView: View {
                     SearchBar(text: $searchText)
                         .padding(.horizontal)
                     
-                    CategoryScrollView()
+                    CategoryScrollView(
+                        selectedCategory: viewModel.selectedCategory,
+                        onCategorySelected: viewModel.selectCategory
+                    )
                     
-                    FeaturedSection(title: "인기 맛집", restaurants: sampleRestaurants)
-                    
-                    FeaturedSection(title: "새로 오픈한 맛집", restaurants: sampleRestaurants)
-                    
-                    FeaturedSection(title: "내 주변 맛집", restaurants: sampleRestaurants)
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(.systemBackground))
+                    } else {
+                        FeaturedSection(title: "추천 맛집", restaurants: viewModel.recommendedRestaurants)
+                        
+                        FeaturedSection(title: "인기 맛집", restaurants: viewModel.popularRestaurants)
+                        
+                        FeaturedSection(title: "내 주변 맛집", restaurants: viewModel.nearbyRestaurants)
+                    }
                     
                     Spacer()
                 }
@@ -25,6 +35,14 @@ struct HomeView: View {
             }
             .navigationTitle("맛집 탐험")
             .navigationBarTitleDisplayMode(.large)
+            .refreshable {
+                viewModel.refreshData()
+            }
+        }
+        .onAppear {
+            if viewModel.recommendedRestaurants.isEmpty {
+                viewModel.loadInitialData()
+            }
         }
     }
 }
@@ -47,12 +65,25 @@ struct SearchBar: View {
 
 struct CategoryScrollView: View {
     let categories = RestaurantCategory.allCases
+    let selectedCategory: RestaurantCategory?
+    let onCategorySelected: (RestaurantCategory?) -> Void
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 15) {
+                // "전체" 버튼 추가
+                CategoryCard(
+                    category: nil,
+                    isSelected: selectedCategory == nil,
+                    onTap: { onCategorySelected(nil) }
+                )
+                
                 ForEach(categories, id: \.self) { category in
-                    CategoryCard(category: category)
+                    CategoryCard(
+                        category: category,
+                        isSelected: selectedCategory == category,
+                        onTap: { onCategorySelected(category) }
+                    )
                 }
             }
             .padding(.horizontal)
@@ -61,21 +92,33 @@ struct CategoryScrollView: View {
 }
 
 struct CategoryCard: View {
-    let category: RestaurantCategory
+    let category: RestaurantCategory?
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    init(category: RestaurantCategory? = nil, isSelected: Bool = false, onTap: @escaping () -> Void) {
+        self.category = category
+        self.isSelected = isSelected
+        self.onTap = onTap
+    }
     
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: category.systemImage)
-                .font(.system(size: 24))
-                .foregroundColor(.orange)
-            
-            Text(category.rawValue)
-                .font(.caption)
-                .fontWeight(.medium)
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                Image(systemName: category?.systemImage ?? "list.bullet")
+                    .font(.system(size: 24))
+                    .foregroundColor(isSelected ? .white : .orange)
+                
+                Text(category?.rawValue ?? "전체")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(isSelected ? .white : .primary)
+            }
+            .frame(width: 70, height: 70)
+            .background(isSelected ? Color.orange : Color(.systemGray6))
+            .cornerRadius(12)
         }
-        .frame(width: 70, height: 70)
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

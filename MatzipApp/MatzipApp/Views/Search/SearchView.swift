@@ -2,56 +2,215 @@ import SwiftUI
 import CoreLocation
 
 struct SearchView: View {
-    @State private var searchText = ""
-    @State private var selectedCategory: RestaurantCategory?
-    @State private var selectedPriceRange: PriceRange?
+    @StateObject private var viewModel = SearchViewModel()
     @State private var showFilters = false
-    
-    var filteredRestaurants: [Restaurant] {
-        var filtered = sampleRestaurants
-        
-        if !searchText.isEmpty {
-            filtered = filtered.filter { restaurant in
-                restaurant.name.localizedCaseInsensitiveContains(searchText) ||
-                restaurant.category.rawValue.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-        
-        if let category = selectedCategory {
-            filtered = filtered.filter { $0.category == category }
-        }
-        
-        if let priceRange = selectedPriceRange {
-            filtered = filtered.filter { $0.priceRange == priceRange }
-        }
-        
-        return filtered
-    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                SearchBar(text: $searchText)
-                    .padding()
-                
-                FilterBar(
-                    selectedCategory: $selectedCategory,
-                    selectedPriceRange: $selectedPriceRange,
-                    showFilters: $showFilters,
-                    resultCount: filteredRestaurants.count
+                // 검색 타입 선택
+                SearchTypeSelector(
+                    selectedType: viewModel.selectedSearchType,
+                    onTypeSelected: viewModel.selectSearchType
                 )
                 
-                if filteredRestaurants.isEmpty {
-                    EmptySearchView()
+                SearchBar(
+                    text: $viewModel.searchText,
+                    onSearchButtonClicked: viewModel.search
+                )
+                .padding()
+                
+                // 맛집 검색일 때만 필터 표시
+                if viewModel.selectedSearchType == .restaurant {
+                    FilterBar(
+                        selectedCategory: $viewModel.selectedCategory,
+                        selectedPriceRange: $viewModel.selectedPriceRange,
+                        showFilters: $showFilters,
+                        resultCount: viewModel.searchResults.count,
+                        onFiltersApplied: viewModel.applyFilters,
+                        onFiltersClear: viewModel.clearFilters
+                    )
+                }
+                
+                // 검색 결과 표시
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !viewModel.hasSearched {
+                    InitialSearchView()
                 } else {
-                    RestaurantList(restaurants: filteredRestaurants)
+                    SearchResultsView(viewModel: viewModel)
                 }
                 
                 Spacer()
             }
-            .navigationTitle("맛집 검색")
+            .navigationTitle("검색")
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+struct SearchTypeSelector: View {
+    let selectedType: SearchViewModel.SearchType
+    let onTypeSelected: (SearchViewModel.SearchType) -> Void
+    
+    var body: some View {
+        HStack {
+            ForEach(SearchViewModel.SearchType.allCases, id: \.self) { type in
+                Button(action: { onTypeSelected(type) }) {
+                    HStack {
+                        Image(systemName: type.systemImage)
+                        Text(type.rawValue)
+                    }
+                    .font(.subheadline)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(selectedType == type ? Color.orange : Color(.systemGray6))
+                    .foregroundColor(selectedType == type ? .white : .primary)
+                    .cornerRadius(20)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct InitialSearchView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass.circle")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            
+            Text("검색어를 입력하세요")
+                .font(.headline)
+                .foregroundColor(.gray)
+            
+            Text("맛집 이름이나 사용자를 검색해보세요")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct SearchResultsView: View {
+    @ObservedObject var viewModel: SearchViewModel
+    
+    var body: some View {
+        if viewModel.selectedSearchType == .restaurant {
+            if viewModel.searchResults.isEmpty {
+                EmptySearchView()
+            } else {
+                RestaurantList(restaurants: viewModel.searchResults)
+            }
+        } else {
+            if viewModel.userSearchResults.isEmpty {
+                EmptyUserSearchView()
+            } else {
+                UserSearchList(users: viewModel.userSearchResults)
+            }
+        }
+    }
+}
+
+struct EmptyUserSearchView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.2.slash")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            
+            Text("사용자를 찾을 수 없습니다")
+                .font(.headline)
+                .foregroundColor(.gray)
+            
+            Text("다른 이름으로 검색해보세요")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct UserSearchList: View {
+    let users: [User]
+    
+    var body: some View {
+        List(users) { user in
+            UserSearchItem(user: user)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        }
+        .listStyle(PlainListStyle())
+    }
+}
+
+struct UserSearchItem: View {
+    let user: User
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            AsyncImage(url: URL(string: user.profileImageURL ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Circle()
+                    .fill(Color(.systemGray5))
+                    .overlay(
+                        Image(systemName: "person.fill")
+                            .foregroundColor(.gray)
+                    )
+            }
+            .frame(width: 50, height: 50)
+            .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                
+                if let bio = user.bio {
+                    Text(bio)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .lineLimit(2)
+                }
+                
+                HStack {
+                    Text("팔로워 \(user.followersCount)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    Text("•")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    Text("리뷰 \(user.reviewCount)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            
+            Spacer()
+            
+            Button("팔로우") {
+                // 팔로우 액션
+            }
+            .font(.caption)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.orange)
+            .foregroundColor(.white)
+            .cornerRadius(15)
+        }
+        .padding(.vertical, 4)
     }
 }
 
@@ -60,6 +219,8 @@ struct FilterBar: View {
     @Binding var selectedPriceRange: PriceRange?
     @Binding var showFilters: Bool
     let resultCount: Int
+    let onFiltersApplied: () -> Void
+    let onFiltersClear: () -> Void
     
     var body: some View {
         HStack {
@@ -80,6 +241,7 @@ struct FilterBar: View {
                 Button("초기화") {
                     selectedCategory = nil
                     selectedPriceRange = nil
+                    onFiltersClear()
                 }
                 .font(.caption)
                 .foregroundColor(.red)
@@ -95,7 +257,8 @@ struct FilterBar: View {
         .sheet(isPresented: $showFilters) {
             FilterSheet(
                 selectedCategory: $selectedCategory,
-                selectedPriceRange: $selectedPriceRange
+                selectedPriceRange: $selectedPriceRange,
+                onFiltersApplied: onFiltersApplied
             )
         }
     }
@@ -104,6 +267,7 @@ struct FilterBar: View {
 struct FilterSheet: View {
     @Binding var selectedCategory: RestaurantCategory?
     @Binding var selectedPriceRange: PriceRange?
+    let onFiltersApplied: () -> Void
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -149,7 +313,10 @@ struct FilterSheet: View {
             }
             .navigationTitle("필터")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("완료") { dismiss() })
+            .navigationBarItems(trailing: Button("완료") { 
+                onFiltersApplied()
+                dismiss() 
+            })
         }
     }
 }

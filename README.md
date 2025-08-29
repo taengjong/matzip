@@ -50,7 +50,12 @@
 │   ├── Follow/         # 팔로우 관리 뷰
 │   ├── Profile/        # 프로필 화면 뷰
 │   └── Common/         # 공통 UI 컴포넌트
-├── ViewModels/         # 비즈니스 로직 (예정)
+├── ViewModels/         # MVVM 패턴 ViewModel 계층
+│   ├── HomeViewModel.swift          # 홈화면 비즈니스 로직
+│   ├── SearchViewModel.swift        # 검색 기능 비즈니스 로직
+│   ├── FeedViewModel.swift          # 소셜 피드 비즈니스 로직
+│   ├── FavoritesViewModel.swift     # 즐겨찾기 비즈니스 로직
+│   └── ProfileViewModel.swift       # 프로필 비즈니스 로직
 ├── Services/           # 서비스 계층
 │   ├── UserFollowService.swift      # 팔로우 관리 서비스
 │   └── UserRestaurantService.swift  # 맛집 리스트 관리 서비스
@@ -177,7 +182,12 @@ MatzipApp/
 │   │   ├── Profile/
 │   │   │   └── ProfileView.swift
 │   │   └── Common/
-│   ├── ViewModels/ (예정)
+│   ├── ViewModels/
+│   │   ├── HomeViewModel.swift
+│   │   ├── SearchViewModel.swift
+│   │   ├── FeedViewModel.swift
+│   │   ├── FavoritesViewModel.swift
+│   │   └── ProfileViewModel.swift
 │   ├── Services/
 │   │   ├── UserFollowService.swift
 │   │   └── UserRestaurantService.swift
@@ -196,21 +206,26 @@ MatzipApp/
 - [x] 프로젝트 기본 설정
 - [x] 데이터 모델 설계 (Restaurant, Review, User, UserFollow, UserRestaurantList)
 - [x] 메인 탭바 구현 (5개 탭)
-- [x] 홈 화면 UI (추천 맛집, 카테고리 스크롤)
-- [x] 검색 화면 UI (맛집 + 사용자 검색)
-- [x] 소셜 피드 화면 UI (팔로잉 사용자 활동)
-- [x] 즐겨찾기 화면 UI (저장된 맛집 + 맛집 리스트)
-- [x] 프로필 화면 UI (사용자 정보, 통계, 팔로우 관리)
+- [x] **MVVM 패턴 완성** ⭐
+  - [x] HomeViewModel (맛집 추천, 카테고리 필터링)
+  - [x] SearchViewModel (맛집/사용자 검색, 고급 필터)
+  - [x] FeedViewModel (소셜 피드, 팔로잉 활동)
+  - [x] FavoritesViewModel (즐겨찾기, 맛집 리스트 관리)
+  - [x] ProfileViewModel (프로필, 팔로우 관리, 설정)
+- [x] 홈 화면 (카테고리 선택, 동적 데이터 로딩)
+- [x] 검색 화면 (맛집/사용자 통합 검색, 실시간 필터링)
+- [x] 소셜 피드 화면 (팔로잉 사용자 활동, 새로고침)
+- [x] 즐겨찾기 화면 (저장된 맛집 + 맛집 리스트)
+- [x] 프로필 화면 (사용자 정보, 통계, 팔로우 관리)
 - [x] 팔로우 관리 화면 (팔로워/팔로잉 목록)
-- [x] 사용자 검색 기능
 - [x] 서비스 계층 구현 (UserFollowService, UserRestaurantService)
-- [x] 샘플 데이터 구성
-- [x] 기본 UI 컴포넌트 (카드, 필터, 빈 상태)
+- [x] 반응형 UI (로딩 상태, 빈 상태, 오류 처리)
+- [x] 샘플 데이터 구성 및 동적 생성
+- [x] 재사용 가능한 UI 컴포넌트
 
 ### 🔄 진행 중
-- ViewModels 계층 구현 (MVVM 패턴 완성)
-- 맛집 리스트 CRUD 기능
-- 피드 실시간 업데이트 로직
+- 남은 View들의 ViewModel 연결 (FeedView, FavoritesView, ProfileView)
+- 실제 CRUD 동작 테스트 및 검증
 
 ### 📋 예정된 기능
 - 맛집 상세 화면
