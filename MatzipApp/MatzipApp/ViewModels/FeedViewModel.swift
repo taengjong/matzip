@@ -13,7 +13,7 @@ class FeedViewModel: ObservableObject {
     
     init() {
         self.userRestaurantService = UserRestaurantService(userId: currentUserId)
-        self.userFollowService = UserFollowService(currentUserId: currentUserId)
+        self.userFollowService = UserFollowService(userId: currentUserId)
         loadFeedData()
     }
     
@@ -45,7 +45,7 @@ class FeedViewModel: ObservableObject {
     
     private func refreshFeedData() {
         // 팔로잉 사용자들의 ID 가져오기
-        let followingUsers = userFollowService.loadFollowing()
+        let followingUsers = userFollowService.getFollowing()
         let followingUserIds = followingUsers.map { $0.id }
         
         // 팔로잉 사용자들의 맛집 리스트 활동 가져오기
@@ -132,13 +132,13 @@ class FeedViewModel: ObservableObject {
     }
     
     func followUser(_ user: User) {
-        userFollowService.followUser(userId: user.id)
+        userFollowService.followUser(user.id)
         // 피드 새로고침으로 변경사항 반영
         refreshFeedData()
     }
     
     func unfollowUser(_ user: User) {
-        userFollowService.unfollowUser(userId: user.id)
+        userFollowService.unfollowUser(user.id)
         // 피드 새로고침으로 변경사항 반영
         refreshFeedData()
     }

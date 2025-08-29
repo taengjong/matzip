@@ -32,7 +32,7 @@ class ProfileViewModel: ObservableObject {
             createdAt: Date().addingTimeInterval(-86400 * 365) // 1년 전 가입
         )
         
-        self.userFollowService = UserFollowService(currentUserId: currentUserId)
+        self.userFollowService = UserFollowService(userId: currentUserId)
         self.userRestaurantService = UserRestaurantService(userId: currentUserId)
         
         loadProfileData()
@@ -83,7 +83,7 @@ class ProfileViewModel: ObservableObject {
     }
     
     func unfollowUser(_ user: User) {
-        userFollowService.unfollowUser(userId: user.id)
+        userFollowService.unfollowUser(user.id)
         following.removeAll { $0.id == user.id }
         updateUserStats()
     }
@@ -125,8 +125,8 @@ class ProfileViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func loadFollowData() {
-        followers = userFollowService.loadFollowers()
-        following = userFollowService.loadFollowing()
+        followers = userFollowService.getFollowers()
+        following = userFollowService.getFollowing()
     }
     
     private func loadUserLists() {

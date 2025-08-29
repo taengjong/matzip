@@ -34,6 +34,14 @@ class UserFollowService: ObservableObject {
         }
     }
     
+    func getFollowing() -> [User] {
+        return following
+    }
+    
+    func getFollowers() -> [User] {
+        return followers
+    }
+    
     func loadSuggestedUsers() {
         isLoading = true
         

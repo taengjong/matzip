@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import CoreLocation
 
 class SearchViewModel: ObservableObject {
     @Published var searchText = ""

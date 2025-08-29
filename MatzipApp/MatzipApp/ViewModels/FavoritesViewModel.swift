@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import CoreLocation
 
 class FavoritesViewModel: ObservableObject {
     @Published var favoriteRestaurants: [Restaurant] = []

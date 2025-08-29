@@ -14,7 +14,7 @@ struct SearchView: View {
                     onTypeSelected: viewModel.selectSearchType
                 )
                 
-                SearchBar(
+                EnhancedSearchBar(
                     text: $viewModel.searchText,
                     onSearchButtonClicked: viewModel.search
                 )
@@ -416,6 +416,40 @@ struct EmptySearchView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct EnhancedSearchBar: View {
+    @Binding var text: String
+    let onSearchButtonClicked: () -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField("맛집, 음식 종류를 검색해보세요", text: $text)
+                .onSubmit {
+                    onSearchButtonClicked()
+                }
+                .onChange(of: text) { _, newValue in
+                    if !newValue.isEmpty {
+                        onSearchButtonClicked()
+                    }
+                }
+            
+            if !text.isEmpty {
+                Button(action: {
+                    text = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
 }
 
