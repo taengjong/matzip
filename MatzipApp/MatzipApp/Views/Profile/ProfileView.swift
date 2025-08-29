@@ -67,6 +67,14 @@ struct ProfileHeader: View {
                 Text(user.email)
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                
+                if let bio = user.bio {
+                    Text(bio)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 4)
+                }
             }
             
             Button("프로필 편집") {
@@ -86,16 +94,37 @@ struct ProfileHeader: View {
 
 struct ProfileStats: View {
     let user: User
+    @State private var showingFollowers = false
+    @State private var showingFollowing = false
     
     var body: some View {
-        HStack(spacing: 40) {
-            StatItem(title: "작성한 리뷰", value: "\(user.reviewCount)")
-            StatItem(title: "평균 평점", value: String(format: "%.1f", user.averageRating))
-            StatItem(title: "즐겨찾기", value: "12") // This would come from a different data source
+        HStack(spacing: 30) {
+            Button {
+                showingFollowers = true
+            } label: {
+                StatItem(title: "팔로워", value: user.followersText)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Button {
+                showingFollowing = true
+            } label: {
+                StatItem(title: "팔로잉", value: user.followingText)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            StatItem(title: "맛집 리스트", value: "\(user.publicListsCount)")
+            StatItem(title: "리뷰", value: "\(user.reviewCount)")
         }
         .padding()
         .background(Color(.systemGray6).opacity(0.5))
         .cornerRadius(16)
+        .sheet(isPresented: $showingFollowers) {
+            FollowListView(listType: .followers, userId: user.id)
+        }
+        .sheet(isPresented: $showingFollowing) {
+            FollowListView(listType: .following, userId: user.id)
+        }
     }
 }
 
@@ -306,6 +335,10 @@ let sampleUser = User(
     profileImageURL: nil,
     reviewCount: 15,
     averageRating: 4.2,
+    followersCount: 128,
+    followingCount: 64,
+    publicListsCount: 8,
+    bio: "맛집 탐험가 🍽️ 서울 곳곳의 숨은 맛집을 찾아다닙니다",
     createdAt: Date()
 )
 

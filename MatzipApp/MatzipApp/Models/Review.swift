@@ -33,5 +33,23 @@ struct User: Identifiable, Codable {
     let profileImageURL: String?
     let reviewCount: Int
     let averageRating: Double
+    let followersCount: Int
+    let followingCount: Int
+    let publicListsCount: Int
+    let bio: String?
     let createdAt: Date
+    
+    var followersText: String {
+        if followersCount >= 1000 {
+            return String(format: "%.1fK", Double(followersCount) / 1000)
+        }
+        return "\(followersCount)"
+    }
+    
+    var followingText: String {
+        if followingCount >= 1000 {
+            return String(format: "%.1fK", Double(followingCount) / 1000)
+        }
+        return "\(followingCount)"
+    }
 }

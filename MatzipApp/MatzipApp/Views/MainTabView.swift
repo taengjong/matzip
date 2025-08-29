@@ -19,19 +19,26 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
+            FeedView()
+                .tabItem {
+                    Image(systemName: "person.2.wave.2")
+                    Text("피드")
+                }
+                .tag(2)
+            
             FavoritesView()
                 .tabItem {
                     Image(systemName: "heart.fill")
                     Text("즐겨찾기")
                 }
-                .tag(2)
+                .tag(3)
             
             ProfileView()
                 .tabItem {
                     Image(systemName: "person.fill")
                     Text("프로필")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(.orange)
     }
