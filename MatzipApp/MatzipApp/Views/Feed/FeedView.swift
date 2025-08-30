@@ -10,17 +10,23 @@ struct FeedView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if viewModel.isLoading {
-                        LoadingFeedView()
+                        PulsingLoadingView()
+                            .frame(maxWidth: .infinity, minHeight: 300)
+                            .scaleTransition(isActive: true)
                     } else if viewModel.feedItems.isEmpty {
                         EmptyFeedView(showingUserSearch: $showingUserSearch)
+                            .fadeSlideTransition(isActive: true, offset: 50)
                     } else {
-                        ForEach(viewModel.feedItems) { item in
-                            FeedItemView(
-                                item: item,
-                                viewModel: viewModel
-                            )
+                        ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
+                            AnimatedCard {
+                                FeedItemView(
+                                    item: item,
+                                    viewModel: viewModel
+                                )
+                            }
                             .padding(.horizontal)
                             .padding(.bottom, 16)
+                            .listItemAppearance(delay: Double(index) * 0.1)
                         }
                     }
                 }

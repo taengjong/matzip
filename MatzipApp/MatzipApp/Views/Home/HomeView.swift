@@ -19,21 +19,29 @@ struct HomeView: View {
                     )
                     
                     if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(.systemBackground))
+                        PulsingLoadingView()
+                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .scaleTransition(isActive: true)
                     } else {
-                        FeaturedSection(title: "추천 맛집", restaurants: viewModel.recommendedRestaurants)
-                        
-                        FeaturedSection(title: "인기 맛집", restaurants: viewModel.popularRestaurants)
-                        
-                        FeaturedSection(title: "내 주변 맛집", restaurants: viewModel.nearbyRestaurants)
-                        
-                        // 지도에서 보기 버튼
-                        MapViewButton(onTap: {
-                            showingMapView = true
-                        })
-                        .padding(.horizontal)
+                        VStack(spacing: 20) {
+                            FeaturedSection(title: "추천 맛집", restaurants: viewModel.recommendedRestaurants)
+                                .fadeSlideTransition(isActive: true, offset: 30)
+                            
+                            FeaturedSection(title: "인기 맛집", restaurants: viewModel.popularRestaurants)
+                                .fadeSlideTransition(isActive: true, offset: 40)
+                            
+                            FeaturedSection(title: "내 주변 맛집", restaurants: viewModel.nearbyRestaurants)
+                                .fadeSlideTransition(isActive: true, offset: 50)
+                            
+                            // 지도에서 보기 버튼
+                            MapViewButton(onTap: {
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                                showingMapView = true
+                            })
+                            .padding(.horizontal)
+                            .fadeSlideTransition(isActive: true, offset: 60)
+                        }
                     }
                     
                     Spacer()
@@ -155,11 +163,14 @@ struct FeaturedSection: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
-                    ForEach(restaurants.prefix(5)) { restaurant in
+                    ForEach(Array(restaurants.prefix(5).enumerated()), id: \.element.id) { index, restaurant in
                         NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
-                            RestaurantCard(restaurant: restaurant)
+                            AnimatedCard {
+                                RestaurantCard(restaurant: restaurant)
+                            }
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .restaurantCardTransition(index: index)
                     }
                 }
                 .padding(.horizontal)
@@ -259,6 +270,7 @@ let sampleRestaurants = [
 
 struct MapViewButton: View {
     let onTap: () -> Void
+    @State private var isPressed = false
     
     var body: some View {
         Button(action: onTap) {
@@ -283,6 +295,8 @@ struct MapViewButton: View {
                 Image(systemName: "arrow.right")
                     .font(.title3)
                     .foregroundColor(.white)
+                    .rotationEffect(.degrees(isPressed ? 5 : 0))
+                    .animation(.easeInOut(duration: 0.2), value: isPressed)
             }
             .padding()
             .background(
@@ -293,8 +307,14 @@ struct MapViewButton: View {
                 )
             )
             .cornerRadius(16)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .shadow(color: .orange.opacity(isPressed ? 0.6 : 0.3), radius: isPressed ? 12 : 8, x: 0, y: isPressed ? 6 : 4)
+            .animation(.easeInOut(duration: 0.2), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
     }
 }
 
