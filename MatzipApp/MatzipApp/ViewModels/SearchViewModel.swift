@@ -138,7 +138,7 @@ class SearchViewModel: ObservableObject {
                 name: name,
                 category: category,
                 address: "서울시 강남구 테헤란로 \(index + 100)",
-                coordinate: CLLocationCoordinate2D(
+                coordinate: Coordinate(
                     latitude: 37.5665 + Double.random(in: -0.05...0.05),
                     longitude: 126.9780 + Double.random(in: -0.05...0.05)
                 ),

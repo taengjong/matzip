@@ -6,7 +6,7 @@ struct Restaurant: Identifiable, Codable {
     let name: String
     let category: RestaurantCategory
     let address: String
-    let coordinate: CLLocationCoordinate2D
+    let coordinate: Coordinate
     let phoneNumber: String?
     let rating: Double
     let reviewCount: Int
@@ -20,6 +20,26 @@ struct Restaurant: Identifiable, Codable {
         didSet {
             // Will be set by location service
         }
+    }
+    
+    // Helper to get CLLocationCoordinate2D
+    var clLocationCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: coordinate.latitude, longitude: coordinate.longitude)
+    }
+}
+
+struct Coordinate: Codable {
+    let latitude: Double
+    let longitude: Double
+    
+    init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+    
+    init(from coordinate: CLLocationCoordinate2D) {
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
     }
 }
 
@@ -99,22 +119,3 @@ struct OpeningHours: Codable {
     }
 }
 
-extension CLLocationCoordinate2D: Codable {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let latitude = try container.decode(Double.self, forKey: .latitude)
-        let longitude = try container.decode(Double.self, forKey: .longitude)
-        self.init(latitude: latitude, longitude: longitude)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(latitude, forKey: .latitude)
-        try container.encode(longitude, forKey: .longitude)
-    }
-    
-    private enum CodingKeys: String, CodingKey {
-        case latitude
-        case longitude
-    }
-}

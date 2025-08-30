@@ -109,38 +109,3 @@ class UserRestaurantService: ObservableObject {
     }
 }
 
-struct RestaurantListFeedItem: Identifiable {
-    let id = UUID()
-    let list: UserRestaurantList
-    let user: User?
-    let createdAt: Date
-    let activityType: FeedActivityType
-    
-    var timeAgo: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
-        return formatter.localizedString(for: createdAt, relativeTo: Date())
-    }
-}
-
-enum FeedActivityType {
-    case newList
-    case addedRestaurant
-    case newReview
-    
-    var displayText: String {
-        switch self {
-        case .newList: return "님이 새 맛집 리스트를 만들었습니다"
-        case .addedRestaurant: return "님이 맛집을 추가했습니다"
-        case .newReview: return "님이 리뷰를 작성했습니다"
-        }
-    }
-    
-    var systemImage: String {
-        switch self {
-        case .newList: return "list.bullet"
-        case .addedRestaurant: return "plus.circle"
-        case .newReview: return "star.fill"
-        }
-    }
-}

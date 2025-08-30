@@ -2,37 +2,68 @@ import SwiftUI
 import Foundation
 
 struct ProfileView: View {
-    @State private var user = sampleUser
-    @State private var showingEditProfile = false
-    @State private var showingSettings = false
+    @StateObject private var viewModel = ProfileViewModel()
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    ProfileHeader(user: user, showingEditProfile: $showingEditProfile)
-                    
-                    ProfileStats(user: user)
-                    
-                    ProfileMenuSection(showingSettings: $showingSettings)
-                    
-                    Spacer()
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ProfileHeader(
+                            user: viewModel.currentUser, 
+                            showingEditProfile: $viewModel.showingEditProfile
+                        )
+                        
+                        ProfileStats(
+                            user: viewModel.currentUser,
+                            viewModel: viewModel
+                        )
+                        
+                        ProfileMenuSection(viewModel: viewModel)
+                        
+                        Spacer()
+                    }
                 }
                 .padding()
             }
             .navigationTitle("프로필")
             .navigationBarTitleDisplayMode(.large)
-            .navigationBarItems(trailing: 
-                Button("설정") {
-                    showingSettings = true
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        ForEach(viewModel.settingItems) { item in
+                            Button {
+                                item.action()
+                            } label: {
+                                Label(item.title, systemImage: item.systemImage)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(.orange)
+                    }
                 }
-            )
+            }
         }
-        .sheet(isPresented: $showingEditProfile) {
-            EditProfileView(user: $user)
+        .sheet(isPresented: $viewModel.showingEditProfile) {
+            EditProfileView(viewModel: viewModel)
         }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
+        .sheet(isPresented: $viewModel.showingFollowersList) {
+            FollowListView(listType: .followers, userId: viewModel.currentUser.id)
+        }
+        .sheet(isPresented: $viewModel.showingFollowingList) {
+            FollowListView(listType: .following, userId: viewModel.currentUser.id)
+        }
+        .refreshable {
+            viewModel.refreshProfile()
+        }
+        .onAppear {
+            if viewModel.followers.isEmpty {
+                viewModel.loadProfileData()
+            }
         }
     }
 }
@@ -94,37 +125,30 @@ struct ProfileHeader: View {
 
 struct ProfileStats: View {
     let user: User
-    @State private var showingFollowers = false
-    @State private var showingFollowing = false
+    let viewModel: ProfileViewModel
     
     var body: some View {
         HStack(spacing: 30) {
             Button {
-                showingFollowers = true
+                viewModel.showFollowers()
             } label: {
-                StatItem(title: "팔로워", value: user.followersText)
+                StatItem(title: "팔로워", value: "\(user.followersCount)")
             }
             .buttonStyle(PlainButtonStyle())
             
             Button {
-                showingFollowing = true
+                viewModel.showFollowing()
             } label: {
-                StatItem(title: "팔로잉", value: user.followingText)
+                StatItem(title: "팔로잉", value: "\(user.followingCount)")
             }
             .buttonStyle(PlainButtonStyle())
             
-            StatItem(title: "맛집 리스트", value: "\(user.publicListsCount)")
+            StatItem(title: "맛집 리스트", value: viewModel.publicListsText)
             StatItem(title: "리뷰", value: "\(user.reviewCount)")
         }
         .padding()
         .background(Color(.systemGray6).opacity(0.5))
         .cornerRadius(16)
-        .sheet(isPresented: $showingFollowers) {
-            FollowListView(listType: .followers, userId: user.id)
-        }
-        .sheet(isPresented: $showingFollowing) {
-            FollowListView(listType: .following, userId: user.id)
-        }
     }
 }
 
@@ -147,15 +171,15 @@ struct StatItem: View {
 }
 
 struct ProfileMenuSection: View {
-    @Binding var showingSettings: Bool
+    let viewModel: ProfileViewModel
     
     var body: some View {
         VStack(spacing: 0) {
             ProfileMenuItem(icon: "doc.text", title: "내 리뷰", action: {})
             ProfileMenuItem(icon: "heart", title: "즐겨찾기 맛집", action: {})
-            ProfileMenuItem(icon: "bell", title: "알림 설정", action: {})
-            ProfileMenuItem(icon: "questionmark.circle", title: "도움말", action: {})
-            ProfileMenuItem(icon: "gear", title: "설정", action: { showingSettings = true })
+            ProfileMenuItem(icon: "list.bullet", title: "내 맛집 리스트", action: {})
+            ProfileMenuItem(icon: "calendar", title: "가입일", 
+                          subtitle: viewModel.joinedDateText, action: {})
         }
         .background(Color(.systemGray6).opacity(0.5))
         .cornerRadius(16)
@@ -165,7 +189,15 @@ struct ProfileMenuSection: View {
 struct ProfileMenuItem: View {
     let icon: String
     let title: String
+    let subtitle: String?
     let action: () -> Void
+    
+    init(icon: String, title: String, subtitle: String? = nil, action: @escaping () -> Void) {
+        self.icon = icon
+        self.title = title
+        self.subtitle = subtitle
+        self.action = action
+    }
     
     var body: some View {
         Button(action: action) {
@@ -179,6 +211,12 @@ struct ProfileMenuItem: View {
                 
                 Spacer()
                 
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.gray)
@@ -189,15 +227,17 @@ struct ProfileMenuItem: View {
 }
 
 struct EditProfileView: View {
-    @Binding var user: User
+    let viewModel: ProfileViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
     @State private var email: String
+    @State private var bio: String
     
-    init(user: Binding<User>) {
-        self._user = user
-        self._name = State(initialValue: user.wrappedValue.name)
-        self._email = State(initialValue: user.wrappedValue.email)
+    init(viewModel: ProfileViewModel) {
+        self.viewModel = viewModel
+        self._name = State(initialValue: viewModel.currentUser.name)
+        self._email = State(initialValue: viewModel.currentUser.email)
+        self._bio = State(initialValue: viewModel.currentUser.bio ?? "")
     }
     
     var body: some View {
@@ -206,7 +246,7 @@ struct EditProfileView: View {
                 Section {
                     HStack {
                         Spacer()
-                        AsyncImage(url: URL(string: user.profileImageURL ?? "")) { image in
+                        AsyncImage(url: URL(string: viewModel.currentUser.profileImageURL ?? "")) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -234,6 +274,8 @@ struct EditProfileView: View {
                 Section("개인정보") {
                     TextField("이름", text: $name)
                     TextField("이메일", text: $email)
+                    TextField("자기소개", text: $bio, axis: .vertical)
+                        .lineLimit(3...5)
                 }
             }
             .navigationTitle("프로필 편집")
@@ -241,7 +283,7 @@ struct EditProfileView: View {
             .navigationBarItems(
                 leading: Button("취소") { dismiss() },
                 trailing: Button("저장") {
-                    // Save changes
+                    viewModel.updateProfile(name: name, email: email, bio: bio)
                     dismiss()
                 }
                 .foregroundColor(.orange)

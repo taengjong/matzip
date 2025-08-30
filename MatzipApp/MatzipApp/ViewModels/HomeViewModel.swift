@@ -74,7 +74,7 @@ class HomeViewModel: ObservableObject {
                 name: name,
                 category: category,
                 address: address,
-                coordinate: CLLocationCoordinate2D(
+                coordinate: Coordinate(
                     latitude: 37.5665 + Double.random(in: -0.1...0.1),
                     longitude: 126.9780 + Double.random(in: -0.1...0.1)
                 ),
