@@ -27,6 +27,7 @@ class UserRestaurantService: ObservableObject {
             userId: currentUserId,
             name: name,
             description: description,
+            restaurantIds: [],
             isPublic: isPublic
         )
         
@@ -48,7 +49,9 @@ class UserRestaurantService: ObservableObject {
                 name: updatedList.name,
                 description: updatedList.description,
                 restaurantIds: restaurantIds,
-                isPublic: updatedList.isPublic
+                isPublic: updatedList.isPublic,
+                createdAt: updatedList.createdAt,
+                updatedAt: Date()
             )
         }
     }
@@ -66,7 +69,9 @@ class UserRestaurantService: ObservableObject {
             name: updatedList.name,
             description: updatedList.description,
             restaurantIds: restaurantIds,
-            isPublic: updatedList.isPublic
+            isPublic: updatedList.isPublic,
+            createdAt: updatedList.createdAt,
+            updatedAt: Date()
         )
     }
     

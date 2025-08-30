@@ -15,15 +15,17 @@ struct UserRestaurantList: Identifiable, Codable {
          name: String, 
          description: String? = nil, 
          restaurantIds: [String] = [], 
-         isPublic: Bool = false) {
+         isPublic: Bool = false,
+         createdAt: Date = Date(),
+         updatedAt: Date? = nil) {
         self.id = id
         self.userId = userId
         self.name = name
         self.description = description
         self.restaurantIds = restaurantIds
         self.isPublic = isPublic
-        self.createdAt = Date()
-        self.updatedAt = nil
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
     
     var restaurantCount: Int {

@@ -136,7 +136,9 @@ struct SampleData {
             name: "요리사가 추천하는 한식당",
             description: "전문 요리사 입장에서 정말 맛있는 한식당들만 모았습니다. 재료부터 조리법까지 완벽한 곳들이에요.",
             restaurantIds: ["rest1", "rest2", "rest3", "rest4", "rest5"],
-            isPublic: true
+            isPublic: true,
+            createdAt: Date().addingTimeInterval(-86400 * 30),
+            updatedAt: nil
         ),
         UserRestaurantList(
             id: "list2", 
@@ -144,7 +146,9 @@ struct SampleData {
             name: "홍대 숨은 맛집",
             description: "홍대에서 현지인만 아는 진짜 맛집들. 관광객들은 모르는 로컬 맛집들을 소개합니다.",
             restaurantIds: ["rest6", "rest7", "rest8"],
-            isPublic: true
+            isPublic: true,
+            createdAt: Date().addingTimeInterval(-86400 * 20),
+            updatedAt: nil
         ),
         UserRestaurantList(
             id: "list3",
@@ -152,7 +156,9 @@ struct SampleData {
             name: "전통 한정식 명가",
             description: "3대째 이어온 전통 한정식집들. 한국의 참맛을 느낄 수 있는 곳들입니다.",
             restaurantIds: ["rest9", "rest10", "rest11", "rest12"],
-            isPublic: true
+            isPublic: true,
+            createdAt: Date().addingTimeInterval(-86400 * 10),
+            updatedAt: nil
         ),
         UserRestaurantList(
             id: "list4",
@@ -160,7 +166,9 @@ struct SampleData {
             name: "최고의 브런치 카페",
             description: "주말 브런치를 위한 완벽한 선택지들. 인테리어부터 맛까지 모든 게 완벽한 카페들이에요.",
             restaurantIds: ["rest13", "rest14", "rest15"],
-            isPublic: true
+            isPublic: true,
+            createdAt: Date().addingTimeInterval(-86400 * 5),
+            updatedAt: nil
         )
     ]
     

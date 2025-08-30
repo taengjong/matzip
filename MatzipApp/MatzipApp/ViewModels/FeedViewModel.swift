@@ -92,7 +92,9 @@ class FeedViewModel: ObservableObject {
                 name: "집밥 느낌 맛집",
                 description: "엄마 손맛이 느껴지는 따뜻한 맛집들",
                 restaurantIds: ["rest16", "rest17", "rest18"],
-                isPublic: true
+                isPublic: true,
+                createdAt: Date().addingTimeInterval(-3600 * 18),
+                updatedAt: nil
             ),
             UserRestaurantList(
                 id: "additional_list_2",
@@ -100,7 +102,9 @@ class FeedViewModel: ObservableObject {
                 name: "디저트 맛집 베스트",
                 description: "달콤함이 가득한 디저트 명가들",
                 restaurantIds: ["rest19", "rest20", "rest21", "rest22"],
-                isPublic: true
+                isPublic: true,
+                createdAt: Date().addingTimeInterval(-3600 * 24),
+                updatedAt: nil
             )
         ]
         

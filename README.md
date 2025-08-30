@@ -294,5 +294,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 개발자
 - **이름**: 윤종희
-- **이메일**: jongheeyun@example.com
+- **이메일**: jongheeyun9@gmail.com
 - **GitHub**: [@jongheeyun](https://github.com/jongheeyun)

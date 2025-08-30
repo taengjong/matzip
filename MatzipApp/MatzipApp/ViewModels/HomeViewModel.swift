@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import Combine
 
 class HomeViewModel: ObservableObject {
     @Published var recommendedRestaurants: [Restaurant] = []
@@ -11,21 +12,42 @@ class HomeViewModel: ObservableObject {
     @Published var error: Error?
     
     private var allRestaurants: [Restaurant] = []
+    private let coreDataService = CoreDataService()
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
+        // Core Data 초기화 시 샘플 데이터 마이그레이션
+        coreDataService.initializeWithSampleData()
         loadInitialData()
     }
     
     func loadInitialData() {
         isLoading = true
         
-        // 실제 서비스에서는 API 호출이나 Core Data에서 데이터를 가져옴
-        // 현재는 샘플 데이터 사용
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.allRestaurants = self.generateSampleRestaurants()
-            self.updateRestaurantCategories()
-            self.isLoading = false
-        }
+        coreDataService.fetchRestaurants()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load restaurants: \(error)")
+                        self.error = error
+                        // 실패 시 샘플 데이터로 폴백
+                        self.loadSampleDataFallback()
+                    }
+                    self.isLoading = false
+                },
+                receiveValue: { restaurants in
+                    self.allRestaurants = restaurants
+                    self.updateRestaurantCategories()
+                    self.error = nil
+                }
+            )
+            .store(in: &cancellables)
+    }
+    
+    private func loadSampleDataFallback() {
+        self.allRestaurants = self.generateSampleRestaurants()
+        self.updateRestaurantCategories()
     }
     
     func refreshData() {

@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import Combine
 
 class RestaurantDetailViewModel: ObservableObject {
     @Published var restaurant: Restaurant
@@ -16,7 +17,9 @@ class RestaurantDetailViewModel: ObservableObject {
     }
     
     private let userRestaurantService: UserRestaurantService
+    private let coreDataService = CoreDataService()
     private let currentUserId: String
+    private var cancellables = Set<AnyCancellable>()
     
     init(restaurant: Restaurant, userId: String, userRestaurantService: UserRestaurantService) {
         self.restaurant = restaurant
@@ -28,17 +31,72 @@ class RestaurantDetailViewModel: ObservableObject {
     func loadRestaurantDetails() {
         isLoading = true
         
-        // 실제로는 서버에서 상세 정보와 리뷰를 가져옴
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.loadReviews()
-            self.checkFavoriteStatus()
-            self.isLoading = false
-        }
+        // Core Data에서 최신 맛집 정보 로드
+        coreDataService.fetchRestaurant(by: restaurant.id)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load restaurant details: \(error)")
+                        self.error = error
+                    }
+                },
+                receiveValue: { restaurant in
+                    if let updatedRestaurant = restaurant {
+                        self.restaurant = updatedRestaurant
+                    }
+                    self.loadReviews()
+                }
+            )
+            .store(in: &cancellables)
+    }
+    
+    private func loadReviews() {
+        coreDataService.fetchReviews(for: restaurant.id)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load reviews: \(error)")
+                        // 실패 시 샘플 리뷰로 폴백
+                        self.reviews = self.generateSampleReviews()
+                    }
+                    self.isLoading = false
+                },
+                receiveValue: { reviews in
+                    if reviews.isEmpty {
+                        // 리뷰가 없으면 샘플 리뷰 사용
+                        self.reviews = self.generateSampleReviews()
+                    } else {
+                        self.reviews = reviews
+                    }
+                }
+            )
+            .store(in: &cancellables)
     }
     
     func toggleFavorite() {
         restaurant.isFavorite.toggle()
         
+        // Core Data에 변경사항 저장
+        coreDataService.saveRestaurant(restaurant)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to update favorite status: \(error)")
+                        // 실패 시 상태 되돌리기
+                        self.restaurant.isFavorite.toggle()
+                    }
+                },
+                receiveValue: { updatedRestaurant in
+                    self.restaurant = updatedRestaurant
+                    print("✅ Favorite status updated successfully")
+                }
+            )
+            .store(in: &cancellables)
+        
+        // 기존 UserRestaurantService도 업데이트
         if restaurant.isFavorite {
             userRestaurantService.addToFavorites(restaurantId: restaurant.id)
         } else {
@@ -85,17 +143,29 @@ class RestaurantDetailViewModel: ObservableObject {
             updatedAt: nil
         )
         
-        reviews.insert(newReview, at: 0)
-        updateRestaurantRating()
+        // Core Data에 리뷰 저장
+        coreDataService.saveReview(newReview)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to save review: \(error)")
+                        self.error = error
+                    }
+                },
+                receiveValue: { savedReview in
+                    self.reviews.insert(savedReview, at: 0)
+                    self.updateRestaurantRating()
+                    print("✅ Review saved successfully")
+                }
+            )
+            .store(in: &cancellables)
+        
         showingReviewForm = false
     }
     
     // MARK: - Private Methods
     
-    private func loadReviews() {
-        // 샘플 리뷰 데이터 생성
-        reviews = generateSampleReviews()
-    }
     
     private func checkFavoriteStatus() {
         restaurant.isFavorite = userRestaurantService.isFavorite(restaurantId: restaurant.id)
@@ -107,6 +177,22 @@ class RestaurantDetailViewModel: ObservableObject {
         
         restaurant.rating = newRating
         restaurant.reviewCount = reviews.count
+        
+        // Core Data에 업데이트된 맛집 정보 저장
+        coreDataService.saveRestaurant(restaurant)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to update restaurant rating: \(error)")
+                    }
+                },
+                receiveValue: { updatedRestaurant in
+                    self.restaurant = updatedRestaurant
+                    print("✅ Restaurant rating updated successfully")
+                }
+            )
+            .store(in: &cancellables)
     }
     
     private func generateSampleReviews() -> [Review] {

@@ -60,7 +60,9 @@ class RestaurantListDetailViewModel: ObservableObject {
             name: list.name,
             description: list.description,
             restaurantIds: list.restaurantIds,
-            isPublic: !list.isPublic
+            isPublic: !list.isPublic,
+            createdAt: list.createdAt,
+            updatedAt: Date()
         )
         
         self.list = updatedList
@@ -80,7 +82,9 @@ class RestaurantListDetailViewModel: ObservableObject {
             name: list.name,
             description: list.description,
             restaurantIds: restaurants.map { $0.id },
-            isPublic: list.isPublic
+            isPublic: list.isPublic,
+            createdAt: list.createdAt,
+            updatedAt: Date()
         )
     }
     

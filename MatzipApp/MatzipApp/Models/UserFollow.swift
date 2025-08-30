@@ -5,12 +5,14 @@ struct UserFollow: Identifiable, Codable {
     let followerId: String
     let followingId: String
     let createdAt: Date
+    let updatedAt: Date?
     
-    init(id: String = UUID().uuidString, followerId: String, followingId: String) {
+    init(id: String = UUID().uuidString, followerId: String, followingId: String, createdAt: Date = Date(), updatedAt: Date? = nil) {
         self.id = id
         self.followerId = followerId
         self.followingId = followingId
-        self.createdAt = Date()
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }
 

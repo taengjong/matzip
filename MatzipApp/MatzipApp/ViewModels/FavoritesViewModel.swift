@@ -106,7 +106,9 @@ class FavoritesViewModel: ObservableObject {
             name: list.name,
             description: list.description,
             restaurantIds: list.restaurantIds,
-            isPublic: !list.isPublic
+            isPublic: !list.isPublic,
+            createdAt: list.createdAt,
+            updatedAt: Date()
         )
         
         // 실제로는 서비스에서 업데이트 메서드를 호출
