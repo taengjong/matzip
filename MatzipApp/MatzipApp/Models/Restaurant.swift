@@ -8,13 +8,13 @@ struct Restaurant: Identifiable, Codable {
     let address: String
     let coordinate: Coordinate
     let phoneNumber: String?
-    let rating: Double
-    let reviewCount: Int
+    var rating: Double
+    var reviewCount: Int
     let priceRange: PriceRange
     let openingHours: OpeningHours?
     let description: String
     let imageURLs: [String]
-    let isFavorite: Bool
+    var isFavorite: Bool
     
     var distanceText: String? {
         didSet {
@@ -97,8 +97,8 @@ struct OpeningHours: Codable {
     let sunday: DayHours?
     
     struct DayHours: Codable {
-        let open: String
-        let close: String
+        let open: Date
+        let close: Date
         let isOpen: Bool
     }
     

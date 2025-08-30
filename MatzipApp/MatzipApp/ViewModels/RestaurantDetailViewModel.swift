@@ -6,19 +6,22 @@ class RestaurantDetailViewModel: ObservableObject {
     @Published var restaurant: Restaurant
     @Published var reviews: [Review] = []
     @Published var isLoading = false
-    @Published var isFavorite = false
     @Published var showingReviewForm = false
     @Published var showingPhotos = false
     @Published var showingMap = false
     @Published var error: Error?
     
-    private let userRestaurantService: UserRestaurantService
-    private let currentUserId = "current_user"
+    var isFavorite: Bool {
+        restaurant.isFavorite
+    }
     
-    init(restaurant: Restaurant) {
+    private let userRestaurantService: UserRestaurantService
+    private let currentUserId: String
+    
+    init(restaurant: Restaurant, userId: String, userRestaurantService: UserRestaurantService) {
         self.restaurant = restaurant
-        self.isFavorite = restaurant.isFavorite
-        self.userRestaurantService = UserRestaurantService(userId: currentUserId)
+        self.currentUserId = userId
+        self.userRestaurantService = userRestaurantService
         loadRestaurantDetails()
     }
     
@@ -34,30 +37,13 @@ class RestaurantDetailViewModel: ObservableObject {
     }
     
     func toggleFavorite() {
-        isFavorite.toggle()
+        restaurant.isFavorite.toggle()
         
-        if isFavorite {
+        if restaurant.isFavorite {
             userRestaurantService.addToFavorites(restaurantId: restaurant.id)
         } else {
             userRestaurantService.removeFromFavorites(restaurantId: restaurant.id)
         }
-        
-        // Restaurant 객체 업데이트
-        restaurant = Restaurant(
-            id: restaurant.id,
-            name: restaurant.name,
-            category: restaurant.category,
-            address: restaurant.address,
-            coordinate: restaurant.coordinate,
-            phoneNumber: restaurant.phoneNumber,
-            rating: restaurant.rating,
-            reviewCount: restaurant.reviewCount,
-            priceRange: restaurant.priceRange,
-            openingHours: restaurant.openingHours,
-            description: restaurant.description,
-            imageURLs: restaurant.imageURLs,
-            isFavorite: isFavorite
-        )
     }
     
     func callRestaurant() {
@@ -112,28 +98,15 @@ class RestaurantDetailViewModel: ObservableObject {
     }
     
     private func checkFavoriteStatus() {
-        isFavorite = userRestaurantService.isFavorite(restaurantId: restaurant.id)
+        restaurant.isFavorite = userRestaurantService.isFavorite(restaurantId: restaurant.id)
     }
     
     private func updateRestaurantRating() {
         let totalRating = reviews.reduce(0) { $0 + $1.rating }
         let newRating = totalRating / Double(reviews.count)
         
-        restaurant = Restaurant(
-            id: restaurant.id,
-            name: restaurant.name,
-            category: restaurant.category,
-            address: restaurant.address,
-            coordinate: restaurant.coordinate,
-            phoneNumber: restaurant.phoneNumber,
-            rating: newRating,
-            reviewCount: reviews.count,
-            priceRange: restaurant.priceRange,
-            openingHours: restaurant.openingHours,
-            description: restaurant.description,
-            imageURLs: restaurant.imageURLs,
-            isFavorite: restaurant.isFavorite
-        )
+        restaurant.rating = newRating
+        restaurant.reviewCount = reviews.count
     }
     
     private func generateSampleReviews() -> [Review] {
