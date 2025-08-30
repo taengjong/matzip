@@ -326,9 +326,11 @@ struct RestaurantList: View {
     
     var body: some View {
         List(restaurants) { restaurant in
-            RestaurantListItem(restaurant: restaurant)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
+                RestaurantListItem(restaurant: restaurant)
+            }
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
         }
         .listStyle(PlainListStyle())
     }

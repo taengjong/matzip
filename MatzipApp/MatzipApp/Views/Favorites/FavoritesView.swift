@@ -112,9 +112,11 @@ struct FavoritesList: View {
     
     var body: some View {
         List(restaurants) { restaurant in
-            FavoriteRestaurantCard(restaurant: restaurant, viewModel: viewModel)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
+                FavoriteRestaurantCard(restaurant: restaurant, viewModel: viewModel)
+            }
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
         }
         .listStyle(PlainListStyle())
     }

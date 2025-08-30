@@ -20,6 +20,13 @@
 - **맛집 리스트 공유**: 새로 만든 맛집 리스트 소식
 - **실시간 업데이트**: 맛집 추가, 리뷰 작성 등 활동 피드
 
+### 🏪 맛집 상세 화면 (NEW! ⭐)
+- **상세 정보**: 위치, 전화번호, 운영시간, 가격대, 설명
+- **실시간 액션**: 즐겨찾기 토글, 전화걸기, Apple Maps 길찾기
+- **리뷰 시스템**: 기존 리뷰 보기, 새 리뷰 작성 (별점 + 텍스트)
+- **실시간 업데이트**: 리뷰 추가 시 평점 자동 재계산
+- **공유 기능**: 맛집 정보 공유하기
+
 ### ❤️ 즐겨찾기 화면
 - **맛집 저장**: 관심 맛집 즐겨찾기 추가/제거
 - **맛집 리스트**: 사용자 정의 맛집 컬렉션 생성
@@ -41,7 +48,9 @@
 │   ├── Restaurant.swift       # 맛집 정보 모델
 │   ├── Review.swift          # 리뷰 & 사용자 모델
 │   ├── UserFollow.swift      # 팔로우 관계 모델
-│   └── UserRestaurantList.swift # 사용자 맛집 리스트 모델
+│   ├── UserRestaurantList.swift # 사용자 맛집 리스트 모델
+│   ├── User.swift            # 사용자 모델 (독립)
+│   └── FeedModels.swift      # 피드 관련 모델
 ├── Views/               # UI 컴포넌트
 │   ├── Home/           # 홈 화면 뷰
 │   ├── Search/         # 검색 화면 뷰 (맛집 + 사용자)
@@ -49,11 +58,13 @@
 │   ├── Favorites/      # 즐겨찾기 화면 뷰
 │   ├── Follow/         # 팔로우 관리 뷰
 │   ├── Profile/        # 프로필 화면 뷰
+│   ├── Restaurant/     # 맛집 상세 화면 뷰 ⭐
 │   └── Common/         # 공통 UI 컴포넌트
 ├── ViewModels/         # MVVM 패턴 ViewModel 계층
 │   ├── HomeViewModel.swift          # 홈화면 비즈니스 로직
 │   ├── SearchViewModel.swift        # 검색 기능 비즈니스 로직
 │   ├── FeedViewModel.swift          # 소셜 피드 비즈니스 로직
+│   ├── RestaurantDetailViewModel.swift # 맛집 상세 비즈니스 로직 ⭐
 │   ├── FavoritesViewModel.swift     # 즐겨찾기 비즈니스 로직
 │   └── ProfileViewModel.swift       # 프로필 비즈니스 로직
 ├── Services/           # 서비스 계층
@@ -212,24 +223,27 @@ MatzipApp/
   - [x] FeedViewModel (소셜 피드, 팔로잉 활동)
   - [x] FavoritesViewModel (즐겨찾기, 맛집 리스트 관리)
   - [x] ProfileViewModel (프로필, 팔로우 관리, 설정)
+  - [x] **RestaurantDetailViewModel (맛집 상세, 리뷰 시스템)** ⭐
 - [x] 홈 화면 (카테고리 선택, 동적 데이터 로딩)
 - [x] 검색 화면 (맛집/사용자 통합 검색, 실시간 필터링)
 - [x] 소셜 피드 화면 (팔로잉 사용자 활동, 새로고침)
 - [x] 즐겨찾기 화면 (저장된 맛집 + 맛집 리스트)
 - [x] 프로필 화면 (사용자 정보, 통계, 팔로우 관리)
 - [x] 팔로우 관리 화면 (팔로워/팔로잉 목록)
+- [x] **맛집 상세 화면 (상세 정보, 리뷰, 액션 버튼)** ⭐
+- [x] **리뷰 작성 화면 (별점, 텍스트, 실시간 업데이트)** ⭐
+- [x] **디바이스 기능 연동 (전화, Apple Maps, 공유)** ⭐
 - [x] 서비스 계층 구현 (UserFollowService, UserRestaurantService)
 - [x] 반응형 UI (로딩 상태, 빈 상태, 오류 처리)
 - [x] 샘플 데이터 구성 및 동적 생성
 - [x] 재사용 가능한 UI 컴포넌트
+- [x] **전체 화면 네비게이션 연결 완료** ⭐
 
 ### 🔄 진행 중
-- 남은 View들의 ViewModel 연결 (FeedView, FavoritesView, ProfileView)
-- 실제 CRUD 동작 테스트 및 검증
+- 맛집 리스트 상세 화면 (현재 "구현되지 않음" 메시지)
+- UI/UX 개선 및 애니메이션 추가
 
 ### 📋 예정된 기능
-- 맛집 상세 화면
-- 리뷰 작성 화면
 - 지도 연동 (MapKit)
 - Core Data를 이용한 로컬 데이터 저장
 - 푸시 알림

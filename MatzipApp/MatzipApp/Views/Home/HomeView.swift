@@ -146,7 +146,10 @@ struct FeaturedSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ForEach(restaurants.prefix(5)) { restaurant in
-                        RestaurantCard(restaurant: restaurant)
+                        NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
+                            RestaurantCard(restaurant: restaurant)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal)
