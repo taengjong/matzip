@@ -3,6 +3,7 @@ import Foundation
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @EnvironmentObject private var userManager: UserManager
     
     var body: some View {
         NavigationView {
@@ -57,6 +58,9 @@ struct ProfileView: View {
         .sheet(isPresented: $viewModel.showingFollowingList) {
             FollowListView(listType: .following, userId: viewModel.currentUser.id)
         }
+        .sheet(isPresented: $viewModel.showingSettings) {
+            SettingsView()
+        }
         .refreshable {
             viewModel.refreshProfile()
         }
@@ -99,8 +103,8 @@ struct ProfileHeader: View {
                     .font(.subheadline)
                     .foregroundColor(.gray)
                 
-                if let bio = user.bio {
-                    Text(bio)
+                if !user.bio.isEmpty {
+                    Text(user.bio)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -237,7 +241,7 @@ struct EditProfileView: View {
         self.viewModel = viewModel
         self._name = State(initialValue: viewModel.currentUser.name)
         self._email = State(initialValue: viewModel.currentUser.email)
-        self._bio = State(initialValue: viewModel.currentUser.bio ?? "")
+        self._bio = State(initialValue: viewModel.currentUser.bio)
     }
     
     var body: some View {
@@ -294,6 +298,7 @@ struct EditProfileView: View {
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var userManager: UserManager
     
     var body: some View {
         NavigationView {
@@ -318,7 +323,8 @@ struct SettingsView: View {
                 
                 Section {
                     Button("로그아웃") {
-                        // Logout
+                        userManager.logout()
+                        dismiss()
                     }
                     .foregroundColor(.red)
                 }

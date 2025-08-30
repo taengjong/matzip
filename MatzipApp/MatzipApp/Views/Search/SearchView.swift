@@ -176,8 +176,8 @@ struct UserSearchItem: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                if let bio = user.bio {
-                    Text(bio)
+                if !user.bio.isEmpty {
+                    Text(user.bio)
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(2)

@@ -3,18 +3,11 @@ import MapKit
 
 struct RestaurantDetailView: View {
     @StateObject private var viewModel: RestaurantDetailViewModel
+    @EnvironmentObject private var userManager: UserManager
     @Environment(\.dismiss) private var dismiss
     
     init(restaurant: Restaurant) {
-        // TODO: Hardcoded user ID should be replaced with actual user session data
-        let currentUserId = "current_user"
-        let userRestaurantService = UserRestaurantService(userId: currentUserId)
-        
-        self._viewModel = StateObject(wrappedValue: RestaurantDetailViewModel(
-            restaurant: restaurant,
-            userId: currentUserId,
-            userRestaurantService: userRestaurantService
-        ))
+        self._viewModel = StateObject(wrappedValue: RestaurantDetailViewModel(restaurant: restaurant))
     }
     
     var body: some View {

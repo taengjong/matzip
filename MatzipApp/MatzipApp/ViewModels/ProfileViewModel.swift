@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 class ProfileViewModel: ObservableObject {
     @Published var currentUser: User
@@ -11,35 +12,75 @@ class ProfileViewModel: ObservableObject {
     @Published var showingEditProfile = false
     @Published var showingFollowersList = false
     @Published var showingFollowingList = false
+    @Published var showingSettings = false
     
-    private let userFollowService: UserFollowService
-    private let userRestaurantService: UserRestaurantService
-    private let currentUserId = "current_user"
+    private let userManager = UserManager.shared
+    private var userFollowService: UserFollowService?
+    private var userRestaurantService: UserRestaurantService?
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        // 현재 사용자 정보 초기화 (실제로는 인증 서비스에서 가져옴)
-        self.currentUser = User(
-            id: currentUserId,
-            name: "윤종희",
-            email: "jongheeyun@example.com",
-            profileImageURL: nil,
-            reviewCount: 42,
-            averageRating: 4.3,
-            followersCount: 128,
-            followingCount: 89,
-            publicListsCount: 6,
-            bio: "맛있는 음식을 찾아 다니는 개발자 👨‍💻🍽️",
-            createdAt: Date().addingTimeInterval(-86400 * 365) // 1년 전 가입
-        )
+        // UserManager에서 현재 사용자 정보 가져오기
+        if let user = userManager.currentUser {
+            self.currentUser = user
+        } else {
+            self.currentUser = User(
+                id: "guest",
+                name: "게스트 사용자",
+                email: "guest@example.com",
+                profileImageURL: nil,
+                reviewCount: 0,
+                averageRating: 0.0,
+                followersCount: 0,
+                followingCount: 0,
+                publicListsCount: 0,
+                bio: "",
+                createdAt: Date()
+            )
+        }
         
-        self.userFollowService = UserFollowService(userId: currentUserId)
-        self.userRestaurantService = UserRestaurantService(userId: currentUserId)
-        
+        setupServices()
+        setupUserManagerObserver()
         loadProfileData()
+    }
+    
+    private func createGuestUser() -> User {
+        return User(
+            id: "guest",
+            name: "게스트 사용자",
+            email: "guest@example.com",
+            profileImageURL: nil,
+            reviewCount: 0,
+            averageRating: 0.0,
+            followersCount: 0,
+            followingCount: 0,
+            publicListsCount: 0,
+            bio: "",
+            createdAt: Date()
+        )
+    }
+    
+    private func setupServices() {
+        guard let userId = userManager.getCurrentUserId() else { return }
+        userFollowService = UserFollowService(userId: userId)
+        userRestaurantService = UserRestaurantService(userId: userId)
+    }
+    
+    private func setupUserManagerObserver() {
+        userManager.$currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                if let user = user {
+                    self?.currentUser = user
+                    self?.setupServices()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     func loadProfileData() {
         isLoading = true
+        error = nil
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.loadFollowData()
@@ -56,20 +97,20 @@ class ProfileViewModel: ObservableObject {
     // MARK: - 프로필 편집
     
     func updateProfile(name: String, email: String, bio: String) {
-        currentUser = User(
-            id: currentUser.id,
-            name: name,
-            email: email,
-            profileImageURL: currentUser.profileImageURL,
-            reviewCount: currentUser.reviewCount,
-            averageRating: currentUser.averageRating,
-            followersCount: currentUser.followersCount,
-            followingCount: currentUser.followingCount,
-            publicListsCount: currentUser.publicListsCount,
-            bio: bio,
-            createdAt: currentUser.createdAt
-        )
-        showingEditProfile = false
+        userManager.updateUserProfile(name: name, email: email, bio: bio)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    if case .failure(let error) = completion {
+                        self?.error = error
+                    }
+                },
+                receiveValue: { [weak self] updatedUser in
+                    self?.currentUser = updatedUser
+                    self?.showingEditProfile = false
+                }
+            )
+            .store(in: &cancellables)
     }
     
     // MARK: - 팔로우 관리
@@ -83,115 +124,66 @@ class ProfileViewModel: ObservableObject {
     }
     
     func unfollowUser(_ user: User) {
-        userFollowService.unfollowUser(user.id)
+        userFollowService?.unfollowUser(user.id)
         following.removeAll { $0.id == user.id }
-        updateUserStats()
+        currentUser.followingCount = max(0, currentUser.followingCount - 1)
     }
     
     func removeFollower(_ user: User) {
-        // 팔로워 제거 기능 (실제로는 서버에서 처리)
         followers.removeAll { $0.id == user.id }
-        updateUserStats()
-    }
-    
-    // MARK: - 설정
-    
-    func logout() {
-        // 로그아웃 처리 (실제로는 인증 토큰 삭제 등)
-        print("로그아웃 처리")
-    }
-    
-    func deleteAccount() {
-        // 회원탈퇴 처리 (실제로는 서버와 통신)
-        print("회원탈퇴 처리")
-    }
-    
-    // MARK: - 통계 정보
-    
-    var joinedDateText: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 M월"
-        return formatter.string(from: currentUser.createdAt)
-    }
-    
-    var averageRatingText: String {
-        return String(format: "%.1f", currentUser.averageRating)
-    }
-    
-    var publicListsText: String {
-        return "\(userRestaurantLists.filter { $0.isPublic }.count)개"
+        currentUser.followersCount = max(0, currentUser.followersCount - 1)
     }
     
     // MARK: - Private Methods
     
     private func loadFollowData() {
-        followers = userFollowService.getFollowers()
-        following = userFollowService.getFollowing()
+        guard let service = userFollowService else { return }
+        
+        followers = service.followers
+        following = service.following
     }
     
     private func loadUserLists() {
-        userRestaurantLists = userRestaurantService.userRestaurantLists
+        guard let service = userRestaurantService else { return }
+        
+        userRestaurantLists = service.userRestaurantLists
+        currentUser.publicListsCount = userRestaurantLists.filter { $0.isPublic }.count
     }
     
     private func updateUserStats() {
-        currentUser = User(
-            id: currentUser.id,
-            name: currentUser.name,
-            email: currentUser.email,
-            profileImageURL: currentUser.profileImageURL,
-            reviewCount: currentUser.reviewCount,
-            averageRating: currentUser.averageRating,
-            followersCount: followers.count,
-            followingCount: following.count,
-            publicListsCount: userRestaurantLists.filter { $0.isPublic }.count,
-            bio: currentUser.bio,
-            createdAt: currentUser.createdAt
-        )
-    }
-}
-
-// MARK: - 설정 항목 모델
-
-extension ProfileViewModel {
-    struct SettingItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let systemImage: String
-        let action: () -> Void
-        let isDestructive: Bool
-        
-        init(title: String, systemImage: String, isDestructive: Bool = false, action: @escaping () -> Void) {
-            self.title = title
-            self.systemImage = systemImage
-            self.isDestructive = isDestructive
-            self.action = action
+        // 실제 환경에서는 CoreData나 API에서 통계 데이터를 가져올 것
+        // 현재는 샘플 데이터로 대체
+        if currentUser.id != "guest" {
+            currentUser.reviewCount = Int.random(in: 10...100)
+            currentUser.averageRating = Double.random(in: 3.0...5.0)
+            currentUser.followersCount = followers.count
+            currentUser.followingCount = following.count
         }
     }
     
+    // MARK: - Computed Properties for UI
+    
+    var publicListsText: String {
+        return "\(currentUser.publicListsCount)"
+    }
+    
+    var joinedDateText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy년 MM월"
+        return formatter.string(from: currentUser.createdAt) + " 가입"
+    }
+    
     var settingItems: [SettingItem] {
-        [
-            SettingItem(title: "알림 설정", systemImage: "bell") {
-                // 알림 설정 화면으로 이동
-                print("알림 설정")
-            },
-            SettingItem(title: "개인정보 보호", systemImage: "lock") {
-                // 개인정보 설정 화면으로 이동
-                print("개인정보 보호 설정")
-            },
-            SettingItem(title: "앱 정보", systemImage: "info.circle") {
-                // 앱 정보 화면으로 이동
-                print("앱 정보")
-            },
-            SettingItem(title: "고객 지원", systemImage: "questionmark.circle") {
-                // 고객 지원 화면으로 이동
-                print("고객 지원")
-            },
-            SettingItem(title: "로그아웃", systemImage: "rectangle.portrait.and.arrow.right") {
-                self.logout()
-            },
-            SettingItem(title: "회원탈퇴", systemImage: "trash", isDestructive: true) {
-                self.deleteAccount()
-            }
+        return [
+            SettingItem(id: "edit", title: "프로필 편집", systemImage: "pencil", action: { self.showingEditProfile = true }),
+            SettingItem(id: "settings", title: "설정", systemImage: "gearshape", action: { self.showingSettings = true })
         ]
     }
+}
+
+struct SettingItem: Identifiable {
+    let id: String
+    let title: String
+    let systemImage: String
+    let action: () -> Void
 }

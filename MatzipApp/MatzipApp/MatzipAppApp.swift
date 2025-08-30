@@ -11,6 +11,7 @@ import SwiftUI
 struct MatzipAppApp: App {
     let coreDataStack = CoreDataStack.shared
     let coreDataService = CoreDataService()
+    let userManager = UserManager.shared
     
     init() {
         setupCoreData()
@@ -18,9 +19,10 @@ struct MatzipAppApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            RootView()
                 .environment(\.managedObjectContext, coreDataStack.viewContext)
                 .environmentObject(coreDataService)
+                .environmentObject(userManager)
         }
     }
     

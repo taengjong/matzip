@@ -104,7 +104,7 @@ class UserFollowService: ObservableObject {
         return allUsers.filter { user in
             user.name.localizedCaseInsensitiveContains(query) ||
             user.email.localizedCaseInsensitiveContains(query) ||
-            (user.bio?.localizedCaseInsensitiveContains(query) ?? false)
+            user.bio.localizedCaseInsensitiveContains(query)
         }
     }
     

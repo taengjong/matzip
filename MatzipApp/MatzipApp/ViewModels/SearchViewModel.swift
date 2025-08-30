@@ -101,7 +101,7 @@ class SearchViewModel: ObservableObject {
     private func searchUsers() {
         let results = allUsers.filter { user in
             user.name.localizedCaseInsensitiveContains(searchText) ||
-            (user.bio?.localizedCaseInsensitiveContains(searchText) ?? false)
+            user.bio.localizedCaseInsensitiveContains(searchText)
         }
         
         // 팔로워 수순으로 정렬

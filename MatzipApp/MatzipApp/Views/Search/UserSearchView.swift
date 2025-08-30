@@ -206,8 +206,8 @@ struct SearchUserRowView: View {
                             .font(.headline)
                             .foregroundColor(.primary)
                         
-                        if let bio = user.bio {
-                            Text(bio)
+                        if !user.bio.isEmpty {
+                            Text(user.bio)
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .lineLimit(2)

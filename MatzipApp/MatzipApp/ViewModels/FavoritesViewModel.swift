@@ -11,9 +11,9 @@ class FavoritesViewModel: ObservableObject {
     @Published var error: Error?
     @Published var showingCreateListSheet = false
     
-    private let userRestaurantService: UserRestaurantService
     private let coreDataService = CoreDataService()
-    private let currentUserId = "current_user"
+    private let userManager = UserManager.shared
+    private var userRestaurantService: UserRestaurantService?
     private var cancellables = Set<AnyCancellable>()
     
     enum FavoritesTab: String, CaseIterable {
@@ -29,8 +29,13 @@ class FavoritesViewModel: ObservableObject {
     }
     
     init() {
-        self.userRestaurantService = UserRestaurantService(userId: currentUserId)
+        setupUserService()
         loadFavoritesData()
+    }
+    
+    private func setupUserService() {
+        guard let userId = userManager.getCurrentUserId() else { return }
+        userRestaurantService = UserRestaurantService(userId: userId)
     }
     
     func loadFavoritesData() {
@@ -115,7 +120,7 @@ class FavoritesViewModel: ObservableObject {
     // MARK: - 맛집 리스트 관리
     
     func createRestaurantList(name: String, description: String?, isPublic: Bool) {
-        userRestaurantService.createRestaurantList(
+        userRestaurantService?.createRestaurantList(
             name: name,
             description: description,
             isPublic: isPublic
@@ -125,12 +130,12 @@ class FavoritesViewModel: ObservableObject {
     }
     
     func deleteRestaurantList(list: UserRestaurantList) {
-        userRestaurantService.deleteRestaurantList(listId: list.id)
+        userRestaurantService?.deleteRestaurantList(listId: list.id)
         userRestaurantLists.removeAll { $0.id == list.id }
     }
     
     func addRestaurantToList(restaurant: Restaurant, list: UserRestaurantList) {
-        userRestaurantService.addRestaurantToList(
+        userRestaurantService?.addRestaurantToList(
             restaurantId: restaurant.id,
             listId: list.id
         )
@@ -138,7 +143,7 @@ class FavoritesViewModel: ObservableObject {
     }
     
     func removeRestaurantFromList(restaurant: Restaurant, list: UserRestaurantList) {
-        userRestaurantService.removeRestaurantFromList(
+        userRestaurantService?.removeRestaurantFromList(
             restaurantId: restaurant.id,
             listId: list.id
         )
@@ -172,7 +177,7 @@ class FavoritesViewModel: ObservableObject {
     }
     
     private func loadUserRestaurantLists() {
-        userRestaurantLists = userRestaurantService.userRestaurantLists
+        userRestaurantLists = userRestaurantService?.userRestaurantLists ?? []
     }
     
     private func generateSampleFavoriteRestaurants() -> [Restaurant] {

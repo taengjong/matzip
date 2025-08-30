@@ -16,16 +16,20 @@ class RestaurantDetailViewModel: ObservableObject {
         restaurant.isFavorite
     }
     
-    private let userRestaurantService: UserRestaurantService
     private let coreDataService = CoreDataService()
-    private let currentUserId: String
+    private let userManager = UserManager.shared
+    private var userRestaurantService: UserRestaurantService?
     private var cancellables = Set<AnyCancellable>()
     
-    init(restaurant: Restaurant, userId: String, userRestaurantService: UserRestaurantService) {
+    init(restaurant: Restaurant) {
         self.restaurant = restaurant
-        self.currentUserId = userId
-        self.userRestaurantService = userRestaurantService
+        setupUserService()
         loadRestaurantDetails()
+    }
+    
+    private func setupUserService() {
+        guard let userId = userManager.getCurrentUserId() else { return }
+        userRestaurantService = UserRestaurantService(userId: userId)
     }
     
     func loadRestaurantDetails() {
@@ -98,9 +102,9 @@ class RestaurantDetailViewModel: ObservableObject {
         
         // 기존 UserRestaurantService도 업데이트
         if restaurant.isFavorite {
-            userRestaurantService.addToFavorites(restaurantId: restaurant.id)
+            userRestaurantService?.addToFavorites(restaurantId: restaurant.id)
         } else {
-            userRestaurantService.removeFromFavorites(restaurantId: restaurant.id)
+            userRestaurantService?.removeFromFavorites(restaurantId: restaurant.id)
         }
     }
     
@@ -130,12 +134,14 @@ class RestaurantDetailViewModel: ObservableObject {
     }
     
     func addReview(rating: Double, content: String, imageURLs: [String] = []) {
+        guard let currentUser = userManager.currentUser else { return }
+        
         let newReview = Review(
             id: UUID().uuidString,
             restaurantId: restaurant.id,
-            userId: currentUserId,
-            userName: "현재 사용자",
-            userProfileImage: nil,
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userProfileImage: currentUser.profileImageURL,
             rating: rating,
             content: content,
             imageURLs: imageURLs,
@@ -168,7 +174,7 @@ class RestaurantDetailViewModel: ObservableObject {
     
     
     private func checkFavoriteStatus() {
-        restaurant.isFavorite = userRestaurantService.isFavorite(restaurantId: restaurant.id)
+        restaurant.isFavorite = userRestaurantService?.isFavorite(restaurantId: restaurant.id) ?? false
     }
     
     private func updateRestaurantRating() {

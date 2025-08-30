@@ -2,15 +2,15 @@ import Foundation
 
 struct User: Identifiable, Codable {
     let id: String
-    let name: String
-    let email: String
-    let profileImageURL: String?
-    let reviewCount: Int
-    let averageRating: Double
-    let followersCount: Int
-    let followingCount: Int
-    let publicListsCount: Int
-    let bio: String?
+    var name: String
+    var email: String
+    var profileImageURL: String?
+    var reviewCount: Int
+    var averageRating: Double
+    var followersCount: Int
+    var followingCount: Int
+    var publicListsCount: Int
+    var bio: String
     let createdAt: Date
     
     var followersText: String {
