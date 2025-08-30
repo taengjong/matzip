@@ -35,6 +35,7 @@
 - [x] 반응형 UI: 로딩 상태, 빈 상태, 오류 처리
 
 **⚙️ 서비스 계층**
+- [x] CoreDataService: Repository 패턴으로 Core Data 접근 계층 구현
 - [x] UserFollowService: 팔로우/언팔로우, 관계 관리
 - [x] UserRestaurantService: 맛집 리스트 CRUD, 즐겨찾기 관리
 - [x] SampleData: 개발용 샘플 데이터 구성
@@ -71,7 +72,8 @@
   - Entity 모델: CDRestaurant, CDReview, CDUserRestaurantList, CDUserFollow
   - CoreDataService: Repository 패턴으로 데이터 접근 계층 추상화
   - ViewModel 통합: HomeViewModel, RestaurantDetailViewModel에서 Core Data 사용
-  - 샘플 데이터 마이그레이션: 앱 최초 실행 시 자동으로 샘플 데이터 저장
+  - **샘플 데이터 초기화**: `initializeWithSampleData()`, `migrateSampleDataToCoreData()` 구현
+  - **자동 데이터 마이그레이션**: 앱 최초 실행 시 샘플 맛집 데이터 자동 생성
 
 #### 🔄 현재 진행 중  
 - 고급 기능 개발 (사용자 인증, 위치 기반 추천 등)
@@ -129,7 +131,7 @@ MatzipApp/
 - **Architecture**: MVVM Pattern
 - **Location**: CoreLocation ✅
 - **Maps**: MapKit ✅
-- **Storage**: Core Data (예정)
+- **Storage**: Core Data ✅
 - **Networking**: URLSession (예정)
 
 ### 데이터 모델 특징
@@ -375,6 +377,9 @@ Core Data Architecture
 - **Publisher 기반**: Combine을 사용한 반응형 데이터 처리
 - **CRUD 연산**: Restaurant, Review, UserRestaurantList, UserFollow 전체 지원
 - **에러 핸들링**: 실패 시 적절한 에러 메시지와 폴백 처리
+- **초기화 기능**: `initializeWithSampleData()` - 앱 최초 실행 시 데이터 체크
+- **데이터 마이그레이션**: `migrateSampleDataToCoreData()` - 샘플 데이터 자동 생성
+- **샘플 데이터 생성**: `createSampleRestaurants()` - 3개 카테고리 샘플 맛집 생성
 
 #### Entity 모델들
 - **CDRestaurant**: 맛집 정보 저장 (위치, 평점, 카테고리 등)
@@ -383,10 +388,12 @@ Core Data Architecture
 - **CDUserFollow**: 팔로우 관계 저장
 
 ### 🔄 데이터 흐름
-1. **앱 시작**: CoreDataStack 초기화 → 샘플 데이터 자동 마이그레이션
-2. **데이터 로드**: ViewModel → CoreDataService → Core Data → UI 업데이트
-3. **데이터 저장**: 사용자 액션 → ViewModel → CoreDataService → Core Data
-4. **실시간 업데이트**: Core Data 변경 → Publisher → ViewModel → UI
+1. **앱 시작**: CoreDataStack 초기화 → `initializeWithSampleData()` 호출
+2. **데이터 체크**: 기존 데이터 존재 여부 확인 (fetchRequest count)
+3. **초기 데이터 생성**: 데이터 없으면 `migrateSampleDataToCoreData()` 실행  
+4. **데이터 로드**: ViewModel → CoreDataService → Core Data → UI 업데이트
+5. **데이터 저장**: 사용자 액션 → ViewModel → CoreDataService → Core Data
+6. **실시간 업데이트**: Core Data 변경 → Publisher → ViewModel → UI
 
 ### 🎯 적용된 ViewModel들
 - **HomeViewModel**: 맛집 목록 로딩을 Core Data에서 수행
@@ -398,5 +405,5 @@ Core Data Architecture
 - **엔티티 모델**: 100% (모든 도메인 모델 대응)
 - **CRUD 연산**: 95% (기본 생성/읽기/수정/삭제 완성)
 - **관계 설정**: 90% (Restaurant ↔ Review, Restaurant ↔ List 관계)
-- **데이터 마이그레이션**: 100% (샘플 데이터 자동 이전)
+- **데이터 마이그레이션**: 100% (초기화 함수로 샘플 데이터 자동 생성)
 - **에러 처리**: 95% (실패 시 폴백 및 로그 처리)

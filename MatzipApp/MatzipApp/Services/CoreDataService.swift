@@ -352,4 +352,55 @@ class CoreDataService: ObservableObject {
             )
         ]
     }
+    
+    // MARK: - Favorites Operations
+    
+    func toggleRestaurantFavorite(_ restaurantId: String) -> AnyPublisher<Bool, Error> {
+        return Future { promise in
+            let context = self.coreDataStack.viewContext
+            
+            let request: NSFetchRequest<CDRestaurant> = CDRestaurant.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", restaurantId)
+            request.fetchLimit = 1
+            
+            do {
+                if let cdRestaurant = try context.fetch(request).first {
+                    cdRestaurant.isFavorite.toggle()
+                    self.coreDataStack.saveContext(context)
+                    promise(.success(cdRestaurant.isFavorite))
+                } else {
+                    promise(.failure(CoreDataError.restaurantNotFound))
+                }
+            } catch {
+                print("❌ Failed to toggle favorite: \(error)")
+                promise(.failure(error))
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+    
+    func fetchFavoriteRestaurants() -> AnyPublisher<[Restaurant], Error> {
+        return Future { promise in
+            let context = self.coreDataStack.viewContext
+            let request: NSFetchRequest<CDRestaurant> = CDRestaurant.fetchRequest()
+            request.predicate = NSPredicate(format: "isFavorite == YES")
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \CDRestaurant.updatedAt, ascending: false)]
+            
+            do {
+                let cdRestaurants = try context.fetch(request)
+                let restaurants = cdRestaurants.map { $0.toRestaurant() }
+                promise(.success(restaurants))
+            } catch {
+                print("❌ Failed to fetch favorite restaurants: \(error)")
+                promise(.failure(error))
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+}
+
+enum CoreDataError: Error {
+    case restaurantNotFound
+    case reviewNotFound
+    case userNotFound
 }

@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import Combine
 
 class FavoritesViewModel: ObservableObject {
     @Published var favoriteRestaurants: [Restaurant] = []
@@ -11,7 +12,9 @@ class FavoritesViewModel: ObservableObject {
     @Published var showingCreateListSheet = false
     
     private let userRestaurantService: UserRestaurantService
+    private let coreDataService = CoreDataService()
     private let currentUserId = "current_user"
+    private var cancellables = Set<AnyCancellable>()
     
     enum FavoritesTab: String, CaseIterable {
         case favorites = "즐겨찾기"
@@ -32,12 +35,27 @@ class FavoritesViewModel: ObservableObject {
     
     func loadFavoritesData() {
         isLoading = true
+        error = nil
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.loadFavoriteRestaurants()
-            self.loadUserRestaurantLists()
-            self.isLoading = false
-        }
+        // Core Data에서 즐겨찾기 레스토랑 로드
+        coreDataService.fetchFavoriteRestaurants()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load favorite restaurants: \(error)")
+                        self.error = error
+                    }
+                    self.isLoading = false
+                },
+                receiveValue: { restaurants in
+                    self.favoriteRestaurants = restaurants
+                }
+            )
+            .store(in: &cancellables)
+        
+        // 사용자 리스트도 로드
+        loadUserRestaurantLists()
     }
     
     func refreshData() {
@@ -51,18 +69,47 @@ class FavoritesViewModel: ObservableObject {
     // MARK: - 즐겨찾기 관리
     
     func toggleFavorite(restaurant: Restaurant) {
-        if userRestaurantService.isFavorite(restaurantId: restaurant.id) {
-            userRestaurantService.removeFromFavorites(restaurantId: restaurant.id)
-            favoriteRestaurants.removeAll { $0.id == restaurant.id }
-        } else {
-            userRestaurantService.addToFavorites(restaurantId: restaurant.id)
-            favoriteRestaurants.append(restaurant)
-        }
+        coreDataService.toggleRestaurantFavorite(restaurant.id)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to toggle favorite: \(error)")
+                        self.error = error
+                    }
+                },
+                receiveValue: { isFavorite in
+                    if isFavorite {
+                        // 즐겨찾기에 추가됨
+                        if !self.favoriteRestaurants.contains(where: { $0.id == restaurant.id }) {
+                            var updatedRestaurant = restaurant
+                            updatedRestaurant.isFavorite = true
+                            self.favoriteRestaurants.append(updatedRestaurant)
+                        }
+                    } else {
+                        // 즐겨찾기에서 제거됨
+                        self.favoriteRestaurants.removeAll { $0.id == restaurant.id }
+                    }
+                }
+            )
+            .store(in: &cancellables)
     }
     
     func removeFavorite(restaurant: Restaurant) {
-        userRestaurantService.removeFromFavorites(restaurantId: restaurant.id)
-        favoriteRestaurants.removeAll { $0.id == restaurant.id }
+        coreDataService.toggleRestaurantFavorite(restaurant.id)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to remove favorite: \(error)")
+                        self.error = error
+                    }
+                },
+                receiveValue: { _ in
+                    self.favoriteRestaurants.removeAll { $0.id == restaurant.id }
+                }
+            )
+            .store(in: &cancellables)
     }
     
     // MARK: - 맛집 리스트 관리

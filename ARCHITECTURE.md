@@ -229,6 +229,9 @@ func removeFromFavorites(restaurantId: String)
 func getRestaurantListsForFeed(followingUserIds: [String]) -> [RestaurantListFeedItem]
 ```
 
+### 구현 완료된 서비스
+- **CoreDataService**: 로컬 데이터 저장 및 Repository 패턴 구현
+
 ### 예정 서비스들
 - **RestaurantService**: 맛집 데이터 관리
 - **LocationService**: 위치 기반 서비스  
@@ -427,11 +430,11 @@ struct SearchView: View {
 - ✅ 상태 관리 체계 확립 (@Published 프로퍼티 활용)
 - 🔄 남은 View들의 ViewModel 연결 (진행 중)
 
-### Phase 2: 데이터 계층 강화
-- Core Data 모델 설계 및 구현
-- Repository 패턴 도입
-- 캐싱 전략 수립
-- 실제 CRUD 동작 구현
+### Phase 2: 데이터 계층 강화 ✅
+- ✅ Core Data 모델 설계 및 구현 (CoreDataStack, Entity 모델)
+- ✅ Repository 패턴 도입 (CoreDataService)
+- ✅ 초기 데이터 생성 (`initializeWithSampleData()`, `migrateSampleDataToCoreData()`)
+- ✅ 실제 CRUD 동작 구현 (Restaurant, Review, UserRestaurantList, UserFollow)
 
 ### Phase 3: 네트워크 계층 구축
 - REST API 클라이언트 구현

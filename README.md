@@ -68,6 +68,7 @@
 │   ├── FavoritesViewModel.swift     # 즐겨찾기 비즈니스 로직
 │   └── ProfileViewModel.swift       # 프로필 비즈니스 로직
 ├── Services/           # 서비스 계층
+│   ├── CoreDataService.swift        # Core Data Repository 서비스
 │   ├── UserFollowService.swift      # 팔로우 관리 서비스
 │   └── UserRestaurantService.swift  # 맛집 리스트 관리 서비스
 └── Utils/              # 유틸리티
@@ -162,7 +163,7 @@
 - **Architecture**: MVVM Pattern
 - **Location**: CoreLocation
 - **Image Loading**: AsyncImage
-- **Data Persistence**: Core Data (예정)
+- **Data Persistence**: Core Data ✅
 - **Networking**: URLSession (예정)
 - **Maps**: MapKit (예정)
 
@@ -244,11 +245,9 @@ MatzipApp/
 - UI/UX 개선 및 애니메이션 추가
 
 ### 📋 예정된 기능
-- 지도 연동 (MapKit)
-- Core Data를 이용한 로컬 데이터 저장
-- 푸시 알림
-- 사용자 인증
+- 사용자 인증 시스템
 - 실제 API 서버 연동
+- 푸시 알림
 - 위치 기반 맛집 검색 기능
 
 ## 💻 시작하기

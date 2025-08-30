@@ -2,6 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct HomeView: View {
+    @EnvironmentObject var coreDataService: CoreDataService
     @StateObject private var viewModel = HomeViewModel()
     @State private var searchText = ""
     @State private var showingMapView = false

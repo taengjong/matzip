@@ -10,11 +10,21 @@ import SwiftUI
 @main
 struct MatzipAppApp: App {
     let coreDataStack = CoreDataStack.shared
+    let coreDataService = CoreDataService()
+    
+    init() {
+        setupCoreData()
+    }
     
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .environment(\.managedObjectContext, coreDataStack.viewContext)
+                .environmentObject(coreDataService)
         }
+    }
+    
+    private func setupCoreData() {
+        coreDataService.initializeWithSampleData()
     }
 }
