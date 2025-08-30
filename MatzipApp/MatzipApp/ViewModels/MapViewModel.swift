@@ -1,6 +1,7 @@
 import Foundation
 import MapKit
 import SwiftUI
+import Combine
 
 class MapViewModel: ObservableObject {
     @Published var restaurants: [Restaurant] = []
@@ -12,7 +13,10 @@ class MapViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var selectedCategory: RestaurantCategory = .all
     
+    private let coreDataService = CoreDataService()
     private let locationManager = CLLocationManager()
+    private var allRestaurants: [Restaurant] = []
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         loadRestaurants()
@@ -22,19 +26,37 @@ class MapViewModel: ObservableObject {
     func loadRestaurants() {
         isLoading = true
         
-        // 실제로는 서버에서 맛집 데이터를 가져옴
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.restaurants = self.generateSampleRestaurants()
-            self.isLoading = false
-        }
+        // Core Data에서 맛집 데이터 로드
+        coreDataService.fetchRestaurants()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load restaurants from Core Data: \(error)")
+                        // 실패 시 샘플 데이터로 폴백
+                        self.allRestaurants = self.generateSampleRestaurants()
+                        self.applyFilter()
+                    }
+                    self.isLoading = false
+                },
+                receiveValue: { restaurants in
+                    self.allRestaurants = restaurants.isEmpty ? self.generateSampleRestaurants() : restaurants
+                    self.applyFilter()
+                }
+            )
+            .store(in: &cancellables)
     }
     
     func filterRestaurants(by category: RestaurantCategory) {
         selectedCategory = category
-        loadRestaurants() // 전체 데이터를 다시 로드한 후 필터링
-        
-        if category != .all {
-            restaurants = restaurants.filter { $0.category == category }
+        applyFilter()
+    }
+    
+    private func applyFilter() {
+        if selectedCategory == .all {
+            restaurants = allRestaurants
+        } else {
+            restaurants = allRestaurants.filter { $0.category == selectedCategory }
         }
     }
     

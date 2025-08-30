@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 class FeedViewModel: ObservableObject {
     @Published var feedItems: [RestaurantListFeedItem] = []
@@ -7,14 +8,21 @@ class FeedViewModel: ObservableObject {
     @Published var isRefreshing = false
     @Published var error: Error?
     
-    private let userRestaurantService: UserRestaurantService
-    private let userFollowService: UserFollowService
-    private let currentUserId = "current_user"
+    private let coreDataService = CoreDataService()
+    private let userManager = UserManager.shared
+    private var userRestaurantService: UserRestaurantService?
+    private var userFollowService: UserFollowService?
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        self.userRestaurantService = UserRestaurantService(userId: currentUserId)
-        self.userFollowService = UserFollowService(userId: currentUserId)
+        setupServices()
         loadFeedData()
+    }
+    
+    private func setupServices() {
+        guard let userId = userManager.getCurrentUserId() else { return }
+        userRestaurantService = UserRestaurantService(userId: userId)
+        userFollowService = UserFollowService(userId: userId)
     }
     
     func loadFeedData() {
@@ -44,6 +52,9 @@ class FeedViewModel: ObservableObject {
     }
     
     private func refreshFeedData() {
+        guard let userFollowService = userFollowService,
+              let userRestaurantService = userRestaurantService else { return }
+        
         // 팔로잉 사용자들의 ID 가져오기
         let followingUsers = userFollowService.getFollowing()
         let followingUserIds = followingUsers.map { $0.id }
@@ -136,13 +147,13 @@ class FeedViewModel: ObservableObject {
     }
     
     func followUser(_ user: User) {
-        userFollowService.followUser(user.id)
+        userFollowService?.followUser(user.id)
         // 피드 새로고침으로 변경사항 반영
         refreshFeedData()
     }
     
     func unfollowUser(_ user: User) {
-        userFollowService.unfollowUser(user.id)
+        userFollowService?.unfollowUser(user.id)
         // 피드 새로고침으로 변경사항 반영
         refreshFeedData()
     }

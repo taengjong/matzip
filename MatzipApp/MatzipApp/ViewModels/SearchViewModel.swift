@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import Combine
 
 class SearchViewModel: ObservableObject {
     @Published var searchText = ""
@@ -12,8 +13,10 @@ class SearchViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var hasSearched = false
     
+    private let coreDataService = CoreDataService()
     private var allRestaurants: [Restaurant] = []
     private var allUsers: [User] = []
+    private var cancellables = Set<AnyCancellable>()
     
     enum SearchType: String, CaseIterable {
         case restaurant = "맛집"
@@ -115,8 +118,28 @@ class SearchViewModel: ObservableObject {
     }
     
     private func loadInitialData() {
-        // 샘플 데이터 로드
-        allRestaurants = generateSampleRestaurants()
+        // Core Data에서 맛집 데이터 로드
+        coreDataService.fetchRestaurants()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to load restaurants: \(error)")
+                        // Core Data 실패 시 샘플 데이터로 폴백
+                        self.allRestaurants = self.generateSampleRestaurants()
+                    }
+                },
+                receiveValue: { restaurants in
+                    self.allRestaurants = restaurants
+                    if restaurants.isEmpty {
+                        // 데이터가 없으면 샘플 데이터로 폴백
+                        self.allRestaurants = self.generateSampleRestaurants()
+                    }
+                }
+            )
+            .store(in: &cancellables)
+        
+        // 사용자 데이터는 아직 SampleData 사용 (향후 User Entity 구현 후 변경)
         allUsers = SampleData.sampleFollowers + SampleData.sampleFollowing + SampleData.sampleSuggestedUsers
     }
     
