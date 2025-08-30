@@ -381,45 +381,6 @@ struct FeedView: View {
         }
     }
     
-    struct RestaurantListDetailView: View {
-        let list: UserRestaurantList
-        @Environment(\.dismiss) private var dismiss
-        
-        var body: some View {
-            NavigationView {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(list.name)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        if let description = list.description {
-                            Text(description)
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        HStack {
-                            Text("맛집 \(list.restaurantCount)개")
-                            Spacer()
-                            Text(list.formattedCreatedDate)
-                                .foregroundColor(.secondary)
-                        }
-                        .font(.caption)
-                        
-                        Text("아직 구현되지 않은 맛집 목록입니다")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 20)
-                    }
-                    .padding()
-                }
-                .navigationTitle("맛집 리스트")
-                .navigationBarTitleDisplayMode(.inline)
-                .navigationBarItems(trailing: Button("완료") { dismiss() })
-            }
-        }
-    }
     
     struct ShareSheet: UIViewControllerRepresentable {
         let items: [Any]

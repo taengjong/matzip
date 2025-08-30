@@ -51,9 +51,12 @@
   - 전화 앱 연동 (전화걸기)
   - Apple Maps 연동 (길찾기)
   - 공유 기능
+- [x] **맛집 리스트 상세 화면 완성** ⭐
+  - RestaurantListDetailView: 리스트 헤더, 맛집 카드, 액션 버튼, 통계 정보
+  - RestaurantListDetailViewModel: 맛집 추가/제거, 가시성 토글, 공유 기능
+  - FeedView 통합: 플레이스홀더 제거하고 실제 상세화면으로 네비게이션 연결
 
 #### 🔄 현재 진행 중
-- 맛집 리스트 상세 화면 (현재 "구현되지 않음" 메시지)
 - UI/UX 개선 및 애니메이션 추가
 
 #### 📋 다음 단계 (우선순위 순)
@@ -63,7 +66,7 @@
 - [x] ~~맛집 상세 화면 (상세 정보, 리뷰, 지도)~~ ✅
 - [x] ~~리뷰 작성/편집 기능~~ ✅
 - [x] ~~View-ViewModel 완전 연결 및 테스트~~ ✅
-- [ ] 맛집 리스트 상세 화면 (사용자 컬렉션)
+- [x] ~~맛집 리스트 상세 화면 (사용자 컬렉션)~~ ✅
 
 **Phase 2: 고급 기능**
 - [ ] MapKit 연동 (지도에서 맛집 찾기)
@@ -92,6 +95,7 @@ MatzipApp/
 │   ├── Favorites/         # 즐겨찾기 + 리스트
 │   ├── Profile/           # 프로필 + 설정
 │   ├── Restaurant/        # 맛집 상세 화면 ⭐
+│   ├── RestaurantList/    # 맛집 리스트 상세 화면 ⭐
 │   └── Common/            # 공통 UI 컴포넌트
 ├── ViewModels/            # 비즈니스 로직 (완성)
 ├── Services/              # 데이터 서비스 계층
@@ -145,17 +149,17 @@ MatzipApp/
 
 ### 코드 현황
 - **Models**: 4개 파일 (Restaurant, Review, UserFollow, UserRestaurantList)
-- **ViewModels**: 5개 파일 (Home, Search, Feed, Favorites, Profile)
-- **Views**: 8개 화면 + 공통 컴포넌트 + 새로운 검색 UI 컴포넌트들
+- **ViewModels**: 6개 파일 (Home, Search, Feed, Favorites, Profile, RestaurantListDetail)
+- **Views**: 9개 화면 + 공통 컴포넌트 + 새로운 검색 UI 컴포넌트들
 - **Services**: 2개 서비스 (UserFollow, UserRestaurant)
 - **Utils**: 1개 파일 (SampleData)
 
 ### 기능 완성도
-- **UI 개발**: 85% 완성 (ViewModel 연결, 반응형 UI 구현)
+- **UI 개발**: 90% 완성 (맛집 리스트 상세화면 추가, ViewModel 연결, 반응형 UI 구현)
 - **데이터 모델**: 90% 완성 (소셜 기능 포함)
-- **비즈니스 로직**: 75% 완성 (MVVM 패턴 완성, ViewModel 구현)
+- **비즈니스 로직**: 80% 완성 (MVVM 패턴 완성, ViewModel 구현)
 - **아키텍처**: 85% 완성 (MVVM 패턴 완전 구현)
-- **연동 기능**: 15% 완성 (로컬 기능, 일부 View-ViewModel 연결)
+- **연동 기능**: 20% 완성 (로컬 기능, View-ViewModel 연결 완료)
 
 ## 🔧 개발 환경 설정
 
