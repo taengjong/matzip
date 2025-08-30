@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 
-struct Restaurant: Identifiable, Codable {
+struct Restaurant: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let category: RestaurantCategory
@@ -28,7 +28,7 @@ struct Restaurant: Identifiable, Codable {
     }
 }
 
-struct Coordinate: Codable {
+struct Coordinate: Codable, Equatable {
     let latitude: Double
     let longitude: Double
     
@@ -44,21 +44,31 @@ struct Coordinate: Codable {
 }
 
 enum RestaurantCategory: String, CaseIterable, Codable {
+    case all = "전체"
     case korean = "한식"
     case chinese = "중식"
     case japanese = "일식"
     case western = "양식"
+    case italian = "이탈리안"
+    case mexican = "멕시칸"
     case cafe = "카페"
     case fastfood = "패스트푸드"
     case dessert = "디저트"
     case other = "기타"
     
+    var displayName: String {
+        return self.rawValue
+    }
+    
     var systemImage: String {
         switch self {
+        case .all: return "list.bullet"
         case .korean: return "bowl.fill"
         case .chinese: return "takeoutbag.and.cup.and.straw.fill"
         case .japanese: return "fish.fill"
         case .western: return "fork.knife"
+        case .italian: return "leaf.fill"
+        case .mexican: return "flame.fill"
         case .cafe: return "cup.and.saucer.fill"
         case .fastfood: return "hamburger.fill"
         case .dessert: return "birthday.cake.fill"
@@ -87,7 +97,7 @@ enum PriceRange: Int, CaseIterable, Codable {
     }
 }
 
-struct OpeningHours: Codable {
+struct OpeningHours: Codable, Equatable {
     let monday: DayHours?
     let tuesday: DayHours?
     let wednesday: DayHours?
@@ -96,7 +106,7 @@ struct OpeningHours: Codable {
     let saturday: DayHours?
     let sunday: DayHours?
     
-    struct DayHours: Codable {
+    struct DayHours: Codable, Equatable {
         let open: Date
         let close: Date
         let isOpen: Bool

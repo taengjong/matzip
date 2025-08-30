@@ -4,6 +4,7 @@ import CoreLocation
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @State private var searchText = ""
+    @State private var showingMapView = false
     
     var body: some View {
         NavigationView {
@@ -27,6 +28,12 @@ struct HomeView: View {
                         FeaturedSection(title: "인기 맛집", restaurants: viewModel.popularRestaurants)
                         
                         FeaturedSection(title: "내 주변 맛집", restaurants: viewModel.nearbyRestaurants)
+                        
+                        // 지도에서 보기 버튼
+                        MapViewButton(onTap: {
+                            showingMapView = true
+                        })
+                        .padding(.horizontal)
                     }
                     
                     Spacer()
@@ -38,6 +45,9 @@ struct HomeView: View {
             .refreshable {
                 viewModel.refreshData()
             }
+        }
+        .sheet(isPresented: $showingMapView) {
+            MapView()
         }
         .onAppear {
             if viewModel.recommendedRestaurants.isEmpty {
@@ -233,7 +243,7 @@ let sampleRestaurants = [
     Restaurant(
         id: "2",
         name: "이탈리안 레스토랑",
-        category: .western,
+        category: .italian,
         address: "서울시 서초구 반포대로 456",
         coordinate: Coordinate(latitude: 37.5013, longitude: 127.0269),
         phoneNumber: "02-9876-5432",
@@ -246,6 +256,47 @@ let sampleRestaurants = [
         isFavorite: true
     )
 ]
+
+struct MapViewButton: View {
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: "map.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("지도에서 보기")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Text("주변 맛집을 지도로 한눈에 확인하세요")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                
+                Spacer()
+                
+                Image(systemName: "arrow.right")
+                    .font(.title3)
+                    .foregroundColor(.white)
+            }
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.8)]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(16)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
 
 #Preview {
     HomeView()

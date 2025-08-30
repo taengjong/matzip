@@ -55,6 +55,11 @@
   - RestaurantListDetailView: 리스트 헤더, 맛집 카드, 액션 버튼, 통계 정보
   - RestaurantListDetailViewModel: 맛집 추가/제거, 가시성 토글, 공유 기능
   - FeedView 통합: 플레이스홀더 제거하고 실제 상세화면으로 네비게이션 연결
+- [x] **MapKit 연동 완성** ⭐
+  - MapView: 맛집 위치 표시, 카테고리 필터링, 인터랙티브 핀
+  - MapViewModel: 지도 영역 관리, 위치 권한, 맛집 선택 처리
+  - 탭바 통합: 새로운 "지도" 탭 추가 (홈-검색-지도-피드-즐겨찾기-프로필)
+  - HomeView 연동: "지도에서 보기" 버튼으로 맵뷰 접근
 
 #### 🔄 현재 진행 중
 - UI/UX 개선 및 애니메이션 추가
@@ -69,7 +74,7 @@
 - [x] ~~맛집 리스트 상세 화면 (사용자 컬렉션)~~ ✅
 
 **Phase 2: 고급 기능**
-- [ ] MapKit 연동 (지도에서 맛집 찾기)
+- [x] ~~MapKit 연동 (지도에서 맛집 찾기)~~ ✅
 - [ ] Core Data 로컬 저장소 구현
 - [ ] 사용자 인증 시스템
 - [ ] 위치 기반 맛집 추천
@@ -96,6 +101,7 @@ MatzipApp/
 │   ├── Profile/           # 프로필 + 설정
 │   ├── Restaurant/        # 맛집 상세 화면 ⭐
 │   ├── RestaurantList/    # 맛집 리스트 상세 화면 ⭐
+│   ├── Map/               # 지도 화면 ⭐
 │   └── Common/            # 공통 UI 컴포넌트
 ├── ViewModels/            # 비즈니스 로직 (완성)
 ├── Services/              # 데이터 서비스 계층
@@ -105,8 +111,8 @@ MatzipApp/
 ### 주요 기술 스택
 - **UI Framework**: SwiftUI (iOS 16.2+)
 - **Architecture**: MVVM Pattern
-- **Location**: CoreLocation (예정)
-- **Maps**: MapKit (예정)
+- **Location**: CoreLocation ✅
+- **Maps**: MapKit ✅
 - **Storage**: Core Data (예정)
 - **Networking**: URLSession (예정)
 
@@ -149,17 +155,17 @@ MatzipApp/
 
 ### 코드 현황
 - **Models**: 4개 파일 (Restaurant, Review, UserFollow, UserRestaurantList)
-- **ViewModels**: 6개 파일 (Home, Search, Feed, Favorites, Profile, RestaurantListDetail)
-- **Views**: 9개 화면 + 공통 컴포넌트 + 새로운 검색 UI 컴포넌트들
+- **ViewModels**: 7개 파일 (Home, Search, Feed, Favorites, Profile, RestaurantListDetail, Map)
+- **Views**: 10개 화면 + 공통 컴포넌트 + 새로운 검색 UI 컴포넌트들
 - **Services**: 2개 서비스 (UserFollow, UserRestaurant)
 - **Utils**: 1개 파일 (SampleData)
 
 ### 기능 완성도
-- **UI 개발**: 90% 완성 (맛집 리스트 상세화면 추가, ViewModel 연결, 반응형 UI 구현)
+- **UI 개발**: 95% 완성 (지도 화면 추가, 맛집 리스트 상세화면, ViewModel 연결, 반응형 UI 구현)
 - **데이터 모델**: 90% 완성 (소셜 기능 포함)
-- **비즈니스 로직**: 80% 완성 (MVVM 패턴 완성, ViewModel 구현)
-- **아키텍처**: 85% 완성 (MVVM 패턴 완전 구현)
-- **연동 기능**: 20% 완성 (로컬 기능, View-ViewModel 연결 완료)
+- **비즈니스 로직**: 85% 완성 (MVVM 패턴 완성, ViewModel 구현, 지도 통합)
+- **아키텍처**: 90% 완성 (MVVM 패턴 완전 구현, MapKit 통합)
+- **연동 기능**: 30% 완성 (지도 연동, 전화/지도 앱 연동, View-ViewModel 연결 완료)
 
 ## 🔧 개발 환경 설정
 
@@ -246,3 +252,40 @@ RestaurantDetailView
 - **기능 연동**: 90% (즐겨찾기, 전화, 지도, 리뷰 - 이미지 업로드 제외)
 - **데이터 바인딩**: 100% (ViewModel ↔ View 완전 연동)
 - **사용성**: 95% (직관적 UI, 피드백, 유효성 검사)
+
+## 🗺️ 지도 기능 구현 상세
+
+### 📱 MapView 구조
+```
+MapView
+├── Map (MapKit)              # 메인 지도 컴포넌트
+├── RestaurantMapPin         # 커스텀 맛집 핀 마커
+├── MapFilterBar            # 카테고리 필터링 바
+├── SelectedRestaurantCard  # 선택된 맛집 정보 카드
+└── 현재 위치 버튼            # GPS 위치 이동
+```
+
+### ⚙️ MapViewModel 주요 기능
+- **맛집 데이터 관리**: `loadRestaurants()` - 지도용 맛집 데이터 로드
+- **카테고리 필터링**: `filterRestaurants()` - 실시간 카테고리별 필터링
+- **지도 영역 관리**: `region` - 지도 중심점 및 줌 레벨 제어
+- **맛집 선택**: `selectRestaurant()` - 핀 선택 시 상세 카드 표시
+- **위치 권한**: `moveToCurrentLocation()` - GPS 기반 현재 위치 이동
+
+### 🔗 다른 화면과의 통합
+- **MainTabView**: 새로운 "지도" 탭 추가 (홈-검색-지도-피드-즐겨찾기-프로필)
+- **HomeView**: "지도에서 보기" 버튼으로 Sheet 형태 접근
+- **RestaurantDetailView**: 지도에서 선택한 맛집의 상세정보 연결
+
+### 🛠️ 기술적 구현 특징
+- **MapKit 활용**: `Map`, `MapAnnotation`을 통한 네이티브 지도 구현
+- **CoreLocation 연동**: 사용자 위치 권한 및 GPS 기능
+- **인터랙티브 UI**: 핀 선택, 카테고리 필터, 애니메이션 효과
+- **성능 최적화**: 지도 영역 변경 시 애니메이션으로 부드러운 전환
+- **반응형 디자인**: 선택된 맛집에 따라 동적으로 UI 변경
+
+### 📊 지도 기능 완성도
+- **지도 표시**: 100% (맛집 위치 핀, 카테고리별 아이콘)
+- **상호작용**: 95% (핀 선택, 상세 카드, 필터링)
+- **위치 서비스**: 90% (현재 위치, 지도 이동)
+- **통합 연결**: 100% (탭바, HomeView, RestaurantDetail 연결)
